@@ -1,63 +1,53 @@
 package reservation.Entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 
 @Entity
-@Table(name = "users")
-public class User {
+@Table (name = "seats")
+public class Seat {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	private int id;
 	
-	@Column(nullable = false, unique = true, length = 50)
-	private String username;
+	@Column (name = "seat_name", nullable = false, length = 45)
+	private String seatName;
 	
-	@Column(nullable = false, unique = true, length = 100)
-	private String email;
+	private int capacity;
 	
-	@Column(nullable = false, unique = true, length = 255)
-	private String password;	
-	
-	@Column(name = "reset_token")
-	private String resetToken;
-	
-	@Column (name ="reset_token_expiration")
-	private LocalDateTime resetTokenExpiration;
-	
-	
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private Role role;
+	@OneToMany(mappedBy = "seats", cascade = CascadeType.ALL)
+	@JsonIgnore 
+	List<Slot> slots;
 	
 	@Column(name = "created_at")
 	@CreationTimestamp
 	private LocalDateTime createdAt;
 	
-	@Column (name = "updated_at")
+	@Column(name = "updated_at")
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
 	
-	public enum Role {
-		GUEST, ADMIN
-	}
-
+	
 }

@@ -1,4 +1,3 @@
-CREATE SCHEMA `reservation_management` ;
 CREATE TABLE `reservation_management`.`users` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(50) NOT NULL,
@@ -33,12 +32,12 @@ CREATE TABLE `reservation_management`.`users` (
   CONSTRAINT `fk_date_id`
     FOREIGN KEY (`date_id`)
     REFERENCES `reservation_management`.`dates` (`id`)
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_seat_id`
     FOREIGN KEY (`seat_id`)
     REFERENCES `reservation_management`.`seats` (`id`)
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     ON UPDATE NO ACTION
 );
 
