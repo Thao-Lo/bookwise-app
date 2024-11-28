@@ -26,11 +26,11 @@ public class Schedule {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int id;
+	private long id;
 
 	private LocalDateTime datetime;
 	
-	@OneToMany(mappedBy = "dates", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
 	@JsonIgnore 
 	List<Slot> slots;
 }

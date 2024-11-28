@@ -37,9 +37,9 @@ public class Seat {
 	
 	private int capacity;
 	
-	@OneToMany(mappedBy = "seats", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "seat", cascade = CascadeType.ALL)
 	@JsonIgnore 
-	List<Slot> slots;
+	List<Slot> slotsBooked;
 	
 	@Column(name = "created_at")
 	@CreationTimestamp

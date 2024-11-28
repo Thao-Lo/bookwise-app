@@ -18,30 +18,34 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 
 @Entity
-@Table(name = "slots")
+@Table(name = "slots", uniqueConstraints = @UniqueConstraint(columnNames = {"seat_id", "date_id"}))
 public class Slot {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int id;
+	private long id;
 
 	@ManyToOne
-	@JoinColumn(name = "seat_id")
-	private Seat seats;
+	@JoinColumn(name = "seat_id", nullable = false)
+	private Seat seat;
 
 	@ManyToOne
-	@JoinColumn(name = "date_id")
+	@JoinColumn(name = "date_id", nullable = false)
 	private Schedule schedule;
+
+	@OneToOne(mappedBy = "slot", cascade = CascadeType.ALL) // Bidirectional mapping
+	private GuestReservation guestReservation; // Reference to GuestReservation
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
