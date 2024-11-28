@@ -1,13 +1,9 @@
 package reservation.Entity;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,7 +26,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 @Entity
-@Table(name = "slots", uniqueConstraints = @UniqueConstraint(columnNames = {"seat_id", "date_id"}))
+@Table(name = "slots", uniqueConstraints = @UniqueConstraint(columnNames = { "seat_id", "date_id" }))
 public class Slot {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
