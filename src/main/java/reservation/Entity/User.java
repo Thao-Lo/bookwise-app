@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -48,7 +49,7 @@ public class User {
 
 	@Column(name = "reset_token_expiration")
 	private LocalDateTime resetTokenExpiration;
-
+	
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private Role role;
@@ -63,10 +64,31 @@ public class User {
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
 	@JsonIgnore
-	List<GuestReservation> guestReservations  = new ArrayList<>();;
+	List<GuestReservation> guestReservations = new ArrayList<>();
 
 	public enum Role {
-		GUEST, ADMIN
-	}
+		GUEST, ADMIN}
+	
+//	public enum Role {
+//		GUEST("guest"), ADMIN("admin");
+//
+//		private final String dbValue;
+//
+//		Role(String dbValue) {
+//			this.dbValue = dbValue;
+//		}
+//		public String getDbValue() {
+//			return dbValue;
+//		}
+//		
+//		public static Role fromDbValue(String dbValue) {
+//			for(Role role: Role.values()) {
+//				if(role.getDbValue().equalsIgnoreCase(dbValue)) {
+//					return role;
+//				}
+//			}
+//			throw new IllegalArgumentException("Invalid role value: " + dbValue);
+//		}
+//	}
 
 }

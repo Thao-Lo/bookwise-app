@@ -20,7 +20,7 @@ public class UserController {
 	@Autowired
 	UserService userService;
 
-	@PostMapping("/user/register")
+	@PostMapping("/register")
 	public ResponseEntity<String> registerNewUser(@Valid @RequestBody RegisterRequest request) {		
 //		if (username.isEmpty() || username == null || email.isEmpty() || email == null || password.isEmpty()
 //				|| password == null || confirmPassword.isEmpty() || confirmPassword == null) {
@@ -57,7 +57,9 @@ public class UserController {
 		user.setUsername(request.getUsername());
 		user.setEmail(request.getEmail());
 		user.setPassword(request.getPassword());
-		user.setRole(Role.valueOf(request.getRole()));
+		user.setRole(Role.valueOf(
+			    request.getRole() != null ? request.getRole() : "GUEST"
+			));
 		userService.saveUser(user);		
 		return new ResponseEntity<>("User Register successfully", HttpStatus.CREATED);
 	}
