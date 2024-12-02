@@ -21,46 +21,43 @@ public class UserController {
 	UserService userService;
 
 	@PostMapping("/register")
-	public ResponseEntity<String> registerNewUser(@Valid @RequestBody RegisterRequest request) {		
-//		if (username.isEmpty() || username == null || email.isEmpty() || email == null || password.isEmpty()
-//				|| password == null || confirmPassword.isEmpty() || confirmPassword == null) {
-//			throw new IllegalArgumentException("Invalid Input");
-//		}
-		// Username
-		// 3 < length < 15
-//		if (!userService.isValidUsernameLength(username)) {
-//			throw new IllegalArgumentException("Username must be between 3 and 15 characters long.");
-//		}
-		// valid?
+	public ResponseEntity<String> registerNewUser(@Valid @RequestBody RegisterRequest request) {
+
 		if (userService.isUsernameExist(request.getUsername())) {
 			return new ResponseEntity<>("Username is already existed.", HttpStatus.CONFLICT);
 		}
-		// confirm email
-//		if (!userService.isValidEmailPattern(email)) {
-//			throw new IllegalArgumentException("Incorrect email pattern");
-//		}
 		if (userService.isEmailExist(request.getEmail())) {
 			return new ResponseEntity<>("Email is already existed.", HttpStatus.CONFLICT);
 		}
-
-		// confirm password pattern
-//		if (!userService.isValidPasswordPattern(password)) {
-//			throw new IllegalArgumentException("Incorrect password pattern");
-//		}
 		// confirm re-enter password
 		if (!request.getPassword().equals(request.getConfirmPassword())) {
 			return new ResponseEntity<>("Passwords are not matched", HttpStatus.BAD_REQUEST);
-		}	
-	
+		}
 		// save to db
 		User user = new User();
 		user.setUsername(request.getUsername());
 		user.setEmail(request.getEmail());
 		user.setPassword(request.getPassword());
-		user.setRole(Role.valueOf(
-			    request.getRole() != null ? request.getRole() : "GUEST"
-			));
-		userService.saveUser(user);		
+		user.setRole(Role.valueOf(request.getRole() != null ? request.getRole() : "GUEST"));
+		userService.saveUser(user);
 		return new ResponseEntity<>("User Register successfully", HttpStatus.CREATED);
 	}
 }
+// confirm email
+//if (!userService.isValidEmailPattern(email)) {
+//	throw new IllegalArgumentException("Incorrect email pattern");
+//}
+//if (username.isEmpty() || username == null || email.isEmpty() || email == null || password.isEmpty()
+//|| password == null || confirmPassword.isEmpty() || confirmPassword == null) {
+//throw new IllegalArgumentException("Invalid Input");
+//}
+// Username
+// 3 < length < 15
+//if (!userService.isValidUsernameLength(username)) {
+//throw new IllegalArgumentException("Username must be between 3 and 15 characters long.");
+//}
+// valid?
+// confirm password pattern
+//if (!userService.isValidPasswordPattern(password)) {
+//	throw new IllegalArgumentException("Incorrect password pattern");
+//}

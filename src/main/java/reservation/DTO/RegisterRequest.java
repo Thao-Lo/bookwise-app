@@ -17,7 +17,7 @@ public class RegisterRequest {
 	private String username;
 
 	@NotEmpty(message = "Email is required.")
-	@Email(message = "Email should be valid.")
+	@Pattern(regexp = "^[\\w-.]+@[\\w-]+\\.[a-zA-Z]{2,}$", message = "Email should be valid.")    
 	private String email;
 
 	@NotEmpty(message = "Password is required.")
