@@ -61,6 +61,15 @@ public class User {
 	@Column(name = "updated_at")
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
+	
+	@Column(name="verification_code")
+	private String verificationCode;
+	
+	@Column(name = "email_verified", nullable = false)
+	private boolean emailVerified = false;
+	
+	@Column(name="code_expiration_time", length = 64)
+	private LocalDateTime codeExpirationTime;
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
 	@JsonIgnore

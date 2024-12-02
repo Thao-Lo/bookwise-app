@@ -1,17 +1,24 @@
 package reservation.Controller;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
 import reservation.DTO.RegisterRequest;
 import reservation.Entity.User;
 import reservation.Entity.User.Role;
+import reservation.Service.EmailService;
 import reservation.Service.UserService;
 
 @RestController
@@ -19,6 +26,9 @@ import reservation.Service.UserService;
 public class UserController {
 	@Autowired
 	UserService userService;
+
+	@Autowired
+	EmailService emailService;
 
 	@PostMapping("/register")
 	public ResponseEntity<String> registerNewUser(@Valid @RequestBody RegisterRequest request) {
@@ -33,15 +43,64 @@ public class UserController {
 		if (!request.getPassword().equals(request.getConfirmPassword())) {
 			return new ResponseEntity<>("Passwords are not matched", HttpStatus.BAD_REQUEST);
 		}
+		String verificationCode = userService.generateVerificationCode();
+
 		// save to db
 		User user = new User();
 		user.setUsername(request.getUsername());
 		user.setEmail(request.getEmail());
 		user.setPassword(request.getPassword());
 		user.setRole(Role.valueOf(request.getRole() != null ? request.getRole() : "GUEST"));
+		user.setVerificationCode(verificationCode);
+		user.setEmailVerified(false);
+		user.setCodeExpirationTime(LocalDateTime.now().plusHours(1));
 		userService.saveUser(user);
+
+		emailService.sendVerificationEmail(request.getEmail(), verificationCode);
+
 		return new ResponseEntity<>("User Register successfully", HttpStatus.CREATED);
 	}
+
+	@PostMapping("/verify-email")
+	public ResponseEntity<String> verifyEmail(@RequestParam @NotEmpty @Email String email, @RequestParam @NotEmpty String code) {
+		User user = userService.findUserByEmail(email);
+
+		if (user == null) {
+			return new ResponseEntity<>("User is not found.", HttpStatus.NOT_FOUND);
+		}
+		if (!user.getVerificationCode().equals(code)) {
+			return new ResponseEntity<>("Invalid verification code.", HttpStatus.BAD_REQUEST);
+		}
+		if (user.getCodeExpirationTime() == null || user.getCodeExpirationTime().isBefore(LocalDateTime.now())) {
+			return new ResponseEntity<>("verification code expired", HttpStatus.BAD_REQUEST);
+		}
+		user.setEmailVerified(true);
+		user.setVerificationCode(null);
+		user.setCodeExpirationTime(null);
+		userService.saveUser(user);
+		return new ResponseEntity<>("Email verified successfully", HttpStatus.OK);
+	}
+
+	@PostMapping("/resend-verification-code")
+	public ResponseEntity<String> resendVerificationCode(@RequestParam @NotEmpty @Email String email) {
+		User user = userService.findUserByEmail(email);
+
+		if (user == null) {
+			return new ResponseEntity<>("User is not found.", HttpStatus.NOT_FOUND);
+		}
+		if(user.isEmailVerified()) {
+			return new ResponseEntity<>("Email is already verified.", HttpStatus.BAD_REQUEST);
+		}
+		String newCode = UUID.randomUUID().toString();
+
+		user.setVerificationCode(newCode);		
+		user.setCodeExpirationTime(LocalDateTime.now().plusHours(1));
+		
+		userService.saveUser(user);
+		emailService.sendVerificationEmail(user.getEmail(), newCode);
+		return new ResponseEntity<>("Verification code resent successfully.", HttpStatus.OK);
+	}
+
 }
 // confirm email
 //if (!userService.isValidEmailPattern(email)) {

@@ -15,7 +15,7 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
 		http.csrf(csrf -> csrf.disable()) //disable CSRF 
 			.authorizeHttpRequests((requests) -> requests					
-					.requestMatchers("/api/v1/register").permitAll() //permit multiple paths
+					.requestMatchers("/api/v1/register", "/api/v1/verify-email").permitAll() //permit multiple paths
 					.anyRequest().authenticated() // all other endpoints require authentication
 					)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

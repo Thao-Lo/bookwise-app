@@ -1,6 +1,7 @@
 package reservation.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,8 +32,11 @@ public class UserService {
 			
 	}
 	public Boolean isEmailExist(String email) {
-		return userRepository.findByEmail(email) != null;
-			
+		return userRepository.findByEmail(email) != null;			
+	}
+	
+	public User findUserByEmail(String email) {
+		return userRepository.findByEmail(email);
 	}
 //	public Boolean isValidEmailPattern(String email) {
 //		String emailPattern = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,63}$";
@@ -53,5 +57,8 @@ public class UserService {
 	public User saveUser(User user) {
 		user.setPassword(hashedPassword(user.getPassword()));
 		return userRepository.save(user);
+	}
+	public String generateVerificationCode() {
+		return UUID.randomUUID().toString();
 	}
 }
