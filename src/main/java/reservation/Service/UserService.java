@@ -38,6 +38,9 @@ public class UserService {
 	public User findUserByEmail(String email) {
 		return userRepository.findByEmail(email);
 	}
+	public User findUserByUsernameOrEmail(String usernameorEmail) {
+		return userRepository.findByUsernameOrEmail(usernameorEmail);
+	}
 //	public Boolean isValidEmailPattern(String email) {
 //		String emailPattern = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,63}$";
 //		Pattern pattern = Pattern.compile(emailPattern);
