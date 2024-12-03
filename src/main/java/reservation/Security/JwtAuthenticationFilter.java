@@ -25,7 +25,7 @@ import reservation.Utils.JwtUtil;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //call 1 time per request
 	@Autowired
-	private JwtUtil jwtUtil;
+	JwtUtil jwtUtil;
 
 	@Override
 	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -44,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				String role = claims.get("role", String.class);
 				if (role == null) {
 					response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-					response.getWriter().write("Role is not found");
+					response.getWriter().write("{\"error\": \"Role is not found\"}");
 					return;
 				}
 				// SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_ADMIN");
@@ -60,11 +60,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				}
 			} catch (ExpiredJwtException e) {
 				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				response.getWriter().write("Token expired");
+				response.getWriter().write("{\"error\": \"Token expired\"}");
 				return;
 			} catch (JwtException e) {
 				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				response.getWriter().write("Invalid token");
+				response.getWriter().write("{\"error\": \"Invalid token\"}");
 				return;
 			}
 		}
