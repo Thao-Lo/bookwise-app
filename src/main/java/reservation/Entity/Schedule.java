@@ -23,7 +23,6 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "dates")
 public class Schedule {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
@@ -33,4 +32,9 @@ public class Schedule {
 	@OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
 	@JsonIgnore 
 	List<Slot> slots;
+	
+
+	public Schedule(LocalDateTime datetime) {
+		this.datetime = datetime;
+	}
 }
