@@ -42,6 +42,9 @@ public class SlotService {
 		}
 		slotRepository.saveAll(slots);
 	}
+	public List<Slot> getSlotsbySeatCapacity(int capacity){
+		return slotRepository.getSlotsBySeatCapacity(capacity);
+	}
 
 }
 //private final List<LocalTime> generateTimeSlots = generateTimeSlots();

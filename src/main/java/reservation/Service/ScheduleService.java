@@ -44,7 +44,7 @@ public class ScheduleService {
 					schedules.add(new Schedule(datetime));
 				}
 				
-				startTime = startTime.plusMinutes(15);
+				startTime = startTime.plusMinutes(60);
 			}
 		}
 		System.out.println( schedules);

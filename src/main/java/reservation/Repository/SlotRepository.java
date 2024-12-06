@@ -1,6 +1,7 @@
 package reservation.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -17,4 +18,8 @@ public interface SlotRepository extends JpaRepository<Slot, Long>{
 	@Query("DELETE FROM Slot s WHERE s.schedule.datetime < :currentDateTime AND s.guestReservation IS NULL")
 	//s.schedule and s.guestReservation is defined in Slot with these names
 	void deleteByScheduleDatetimeBefore(@Param("currentDateTime") LocalDateTime currentDatetime);
+	
+	@Query("SELECT s FROM Slot s WHERE s.seat.capacity = :capacity AND s.status = 'AVAILABLE'")
+	List<Slot> getSlotsBySeatCapacity(@Param("capacity") int capacity);
+	
 }
