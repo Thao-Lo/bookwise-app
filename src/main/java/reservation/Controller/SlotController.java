@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
 import reservation.DTO.SlotResponse;
 import reservation.Entity.Slot;
