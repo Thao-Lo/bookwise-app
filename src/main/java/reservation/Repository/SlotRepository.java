@@ -11,10 +11,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import jakarta.transaction.Transactional;
+import reservation.Entity.Schedule;
+import reservation.Entity.Seat;
 import reservation.Entity.Slot;
 
 public interface SlotRepository extends JpaRepository<Slot, Long> {
-
+	@Query("SELECT COUNT(s) > 0 FROM Slot s WHERE s.seat = :seat AND s.schedule= :schedule")
+	boolean existsBySeatAndSchedule(@Param("seat") Seat seat, @Param("schedule") Schedule schedule);
+	
 	@Transactional
 	@Modifying
 	@Query("DELETE FROM Slot s WHERE s.schedule.datetime < :currentDateTime AND s.guestReservation IS NULL")

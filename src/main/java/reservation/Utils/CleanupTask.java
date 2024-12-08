@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import reservation.Repository.ScheduleRepository;
 import reservation.Repository.SlotRepository;
 
-//@Component
+@Component
 public class CleanupTask {
 
 	@Autowired

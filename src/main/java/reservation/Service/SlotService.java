@@ -34,16 +34,21 @@ public class SlotService {
 
 		for (Schedule schedule : schedules) {
 			for (Seat seat : seats) {
-				Slot slot = new Slot();
-				slot.setSeat(seat);
-				slot.setSchedule(schedule);
-				slot.setStatus(Slot.Status.AVAILABLE);
-				slots.add(slot);
+				if(!slotRepository.existsBySeatAndSchedule(seat, schedule)) {
+					Slot slot = new Slot();
+					slot.setSeat(seat);
+					slot.setSchedule(schedule);
+					slot.setStatus(Slot.Status.AVAILABLE);
+					slots.add(slot);
+				}				
 			}
 		}
 		slotRepository.saveAll(slots);
 	}
-
+	public boolean isSlotsExist(Seat seat, Schedule schedule) {
+		return slotRepository.existsBySeatAndSchedule(seat, schedule);
+	}
+	
 	public List<Slot> getSlotsbySeatCapacity(int capacity) {
 		return slotRepository.getSlotsBySeatCapacity(capacity);
 	}
