@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class Application {
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
-		  TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 		System.out.println("Application timezone: " + ZoneId.systemDefault());
 	}
 }

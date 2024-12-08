@@ -10,7 +10,7 @@ import reservation.Service.ScheduleService;
 import reservation.Service.SlotService;
 
 
-@Component
+//@Component
 public class ScheduleInitializer {
 
 	@Autowired

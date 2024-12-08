@@ -1,6 +1,9 @@
 package reservation.DTO;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class SlotResponse {
 	private String tableName;
 	private int capacity;
-	private LocalDateTime datetime;
+	private LocalDate date;
+	private LocalTime time;
 //	private String status;
 }

@@ -3,6 +3,7 @@ package reservation.Service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,10 +43,45 @@ public class SlotService {
 		}
 		slotRepository.saveAll(slots);
 	}
-	public List<Slot> getSlotsbySeatCapacity(int capacity){
+
+	public List<Slot> getSlotsbySeatCapacity(int capacity) {
 		return slotRepository.getSlotsBySeatCapacity(capacity);
 	}
 
+	public List<Slot> getSlots(Integer capacity, LocalDate date, LocalTime time) {
+		int[] capacities = { 2, 4, 6 };
+
+		if (capacity == null && date == null && time == null) {
+			return slotRepository.getSlotsBySeatCapacity(capacities[0]);
+		}
+		if (capacity == null) {
+			return slotRepository.getSlotsBySeatCapacity(capacities[0]);
+		}
+		
+		//set capacity if its 3 will become 4
+		for (int i = 0; i < capacities.length; i++) {
+			if (capacity > capacities[capacities.length - 1]) {
+				return Collections.emptyList();
+			}
+			if (capacity <= capacities[i]) {
+				capacity = capacities[i];
+				break;
+			}
+		}		
+		if (date == null && time == null) {
+			return slotRepository.getSlotsBySeatCapacity(capacities[0]);
+		}
+		if (date == null) {
+			return slotRepository.getSlotsBySeatCapacityAndTime(capacity, time);
+
+		}
+		if (time == null) {
+			return slotRepository.getSlotsBySeatCapacityAndDate(capacity, date);
+
+		}
+
+		return slotRepository.getSlotsBySeatCapacityAndDateAndTime(capacity, date, time);
+	}
 }
 //private final List<LocalTime> generateTimeSlots = generateTimeSlots();
 //

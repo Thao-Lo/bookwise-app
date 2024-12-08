@@ -1,6 +1,8 @@
 package reservation.Utils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 
 import org.springframework.stereotype.Component;
@@ -18,4 +20,16 @@ public class TimeZoneConverter {
 				.withZoneSameInstant(ZoneId.of(userTimeZone)) // 18:00 Z[Sydney]
 				.toLocalDateTime(); //18:00 remove Zone
 	}
+	
+	public LocalTime convertTimeToUTC(LocalTime localTime, String userTimeZone) {
+		LocalDate dummyDate = LocalDate.of(1970, 1, 1);
+		LocalDateTime localDateTime = LocalDateTime.of(dummyDate, localTime);
+		return convertToUTC(localDateTime, userTimeZone).toLocalTime();
+	}
+	public LocalTime convertTimeToLocalTime(LocalTime utcTime, String userTimeZone) {
+		LocalDate dummyDate = LocalDate.of(1970, 1, 1);
+		LocalDateTime localDateTime = LocalDateTime.of(dummyDate, utcTime);
+		return convertToLocalTime(localDateTime, userTimeZone).toLocalTime();
+	}	
+	
 }
