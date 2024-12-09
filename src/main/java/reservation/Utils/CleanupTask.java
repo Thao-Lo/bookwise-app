@@ -31,15 +31,19 @@ public class CleanupTask {
 	}	
 	
 	@EventListener(ApplicationReadyEvent.class)
-	@Order(1)
+	@Order(3)
 	public void cleanUpOnStartUp() {
 		System.out.println("Running cleanup on startup...");
 		cleanUp();
 	}
 	
 	public void cleanUp() {
-		LocalDateTime now = timeZoneConverter.convertToUTC(LocalDateTime.now(), "Australia/Sydney");		
-		scheduleRepository.deleteByDatetimeBefore(now);
-		slotRepository.deleteByScheduleDatetimeBefore(now);
+		LocalDateTime nowUtc = timeZoneConverter.convertToUTC(LocalDateTime.now(), "Australia/Sydney").withNano(0);
+//		LocalDateTime nowUtc = LocalDateTime.now().withNano(0);
+
+		System.out.println("current UTC" + nowUtc);
+		scheduleRepository.deleteByDatetimeBefore(nowUtc);
+		slotRepository.deleteByScheduleDatetimeBefore(nowUtc);
+	    System.out.println("DEBUG: Cleanup query executed for datetime: " + nowUtc);
 	}
 }

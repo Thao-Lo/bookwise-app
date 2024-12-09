@@ -22,6 +22,7 @@ public class ScheduleService {
 	public void insertScheduleForNext30Days() {
 		//today: date + time
 		LocalDateTime now = LocalDateTime.now();
+		LocalDate today = now.toLocalDate();
 		List<Schedule> schedules = new ArrayList<>();
 		List<LocalDateTime> datetimeInDb = scheduleRepository.findAllDatetimeBetween(now, now.plusDays(30));
 		Set<LocalDateTime> datetimeInDbSet = new HashSet<>(datetimeInDb);
@@ -36,9 +37,13 @@ public class ScheduleService {
 			
 			//end before 21:15 -> 21:00
 			while (startTime.isBefore(endTime)) {
+				
 				//add current date with each time slots
 				LocalDateTime datetime = LocalDateTime.of(date, startTime);
-				
+				if(date.equals(today) && datetime.isBefore(now)) {
+					startTime = startTime.plusMinutes(60); // Move to the next slot
+	                continue;
+				}
 				//check whether db already have this daytime
 				if(!datetimeInDbSet.contains(datetime)) {
 					schedules.add(new Schedule(datetime));

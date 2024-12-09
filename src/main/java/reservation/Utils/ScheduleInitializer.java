@@ -10,7 +10,7 @@ import reservation.Service.ScheduleService;
 import reservation.Service.SlotService;
 
 
-@Component
+//@Component
 public class ScheduleInitializer {
 
 	@Autowired
@@ -20,7 +20,7 @@ public class ScheduleInitializer {
 	SlotService slotService;
 	
 	@EventListener(ApplicationReadyEvent.class)
-	@Order(2)
+	@Order(1)
 	public void initializeSchedules() {
 		System.out.println("Initializing schedules for the next 30 days..");
 		scheduleService.insertScheduleForNext30Days();		
@@ -28,7 +28,7 @@ public class ScheduleInitializer {
 	}
 	
 	@EventListener(ApplicationReadyEvent.class)
-	@Order(3)
+	@Order(2)
 	public void initializeSlots() {
 		System.out.println("Initializing slots for the next 30 days..");
 		slotService.generateSlots();

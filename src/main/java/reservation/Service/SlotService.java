@@ -1,10 +1,12 @@
 package reservation.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import reservation.Entity.Slot;
 import reservation.Repository.ScheduleRepository;
 import reservation.Repository.SeatRepository;
 import reservation.Repository.SlotRepository;
+import reservation.Utils.TimeZoneConverter;
 
 @Service
 public class SlotService {
@@ -27,6 +30,9 @@ public class SlotService {
 	@Autowired
 	SlotRepository slotRepository;
 
+	@Autowired
+	TimeZoneConverter timeZoneConverter;
+
 	public void generateSlots() {
 		List<Schedule> schedules = scheduleRepository.findAll();
 		List<Seat> seats = seatRepository.findAll();
@@ -34,58 +40,88 @@ public class SlotService {
 
 		for (Schedule schedule : schedules) {
 			for (Seat seat : seats) {
-				if(!slotRepository.existsBySeatAndSchedule(seat, schedule)) {
+				if (!slotRepository.existsBySeatAndSchedule(seat, schedule)) {
 					Slot slot = new Slot();
 					slot.setSeat(seat);
 					slot.setSchedule(schedule);
 					slot.setStatus(Slot.Status.AVAILABLE);
 					slots.add(slot);
-				}				
+				}
 			}
 		}
 		slotRepository.saveAll(slots);
 	}
+
 	public boolean isSlotsExist(Seat seat, Schedule schedule) {
 		return slotRepository.existsBySeatAndSchedule(seat, schedule);
 	}
-	
+
 	public List<Slot> getSlotsbySeatCapacity(int capacity) {
 		return slotRepository.getSlotsBySeatCapacity(capacity);
 	}
 
 	public List<Slot> getSlots(Integer capacity, LocalDate date, LocalTime time) {
-		int[] capacities = { 2, 4, 6 };
 
-		if (capacity == null && date == null && time == null) {
-			return slotRepository.getSlotsBySeatCapacity(capacities[0]);
-		}
-		if (capacity == null) {
-			return slotRepository.getSlotsBySeatCapacity(capacities[0]);
-		}
-		
-		//set capacity if its 3 will become 4
+	    int[] capacities = {2, 4, 6};
+
+	    // Default capacity if null 
+	    if (capacity == null) {
+	        capacity = capacities[0]; // Default to smallest capacity
+	    }
+
+	    // Normalize capacity
+	    capacity = normalizeCapacity(capacity, capacities);
+	    if (capacity == null) {
+	        return Collections.emptyList(); // Invalid capacity
+	    }
+
+	    // Case 1: All parameters are null
+	    if (date == null && time == null) {
+	        return slotRepository.getSlotsBySeatCapacity(capacity);
+	    }
+
+	    // Case 2: time == null && date != null
+	    if (time == null) {
+	        return slotRepository.getSlotsBySeatCapacityAndDate(capacity, date);
+	    }
+
+	    // Case 3: time != null && date == null 
+	    if (date == null && time != null) {
+	        LocalDate today = LocalDate.now();
+	        List<LocalDate> dates = today.datesUntil(today.plusDays(30)).collect(Collectors.toList());
+	        List<Slot> availableSlots = new ArrayList<>();
+
+	        for (LocalDate searchDate : dates) {
+	            LocalTime utcTime = timeZoneConverter.convertTimeToUTC(searchDate, time, "Australia/Sydney");
+	            System.out.println("UTC time for date " + searchDate + ": " + utcTime);
+	            LocalDateTime localDateTime = LocalDateTime.of(searchDate, utcTime);
+	            List<Slot> slots = slotRepository.getSlotBySeatCapacityAndTime(capacity, localDateTime);
+	            if (slots != null) {
+	                availableSlots.addAll(slots);
+	            }
+	        }
+
+	        return availableSlots;
+	    }
+	    // Case 4: All parameters are provided
+	    if (date != null && time != null) {
+	        LocalTime utcTime = timeZoneConverter.convertTimeToUTC(date, time, "Australia/Sydney");
+	        System.out.println("Converted time to UTC: " + utcTime);
+	        return slotRepository.getSlotsBySeatCapacityAndDateAndTime(capacity, date, utcTime);
+	    }
+
+	    // Fallback (should not occur)
+	    return Collections.emptyList();
+	
+	}
+
+	private Integer normalizeCapacity(Integer capacity, int[] capacities) {
 		for (int i = 0; i < capacities.length; i++) {
-			if (capacity > capacities[capacities.length - 1]) {
-				return Collections.emptyList();
-			}
 			if (capacity <= capacities[i]) {
-				capacity = capacities[i];
-				break;
+				return capacities[i];
 			}
-		}		
-		if (date == null && time == null) {
-			return slotRepository.getSlotsBySeatCapacity(capacities[0]);
 		}
-		if (date == null) {
-			return slotRepository.getSlotsBySeatCapacityAndTime(capacity, time);
-
-		}
-		if (time == null) {
-			return slotRepository.getSlotsBySeatCapacityAndDate(capacity, date);
-
-		}
-
-		return slotRepository.getSlotsBySeatCapacityAndDateAndTime(capacity, date, time);
+		return null; // Return null if capacity exceeds maximum
 	}
 }
 //private final List<LocalTime> generateTimeSlots = generateTimeSlots();

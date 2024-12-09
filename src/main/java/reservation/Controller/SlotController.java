@@ -38,9 +38,7 @@ public class SlotController {
 			@RequestParam(required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 			@RequestParam(required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time
 			) {
-		if(time != null) {
-			time = timeZoneConverter.convertTimeToUTC(time, "Australia/Sydney");
-		}		
+			
 		
 		List<Slot> slots = slotService.getSlots(capacity, date, time);
 		
