@@ -38,8 +38,8 @@ public class CleanupTask {
 	}
 	
 	public void cleanUp() {
-		LocalDateTime nowUtc = timeZoneConverter.convertToUTC(LocalDateTime.now(), "Australia/Sydney").withNano(0);
-//		LocalDateTime nowUtc = LocalDateTime.now().withNano(0);
+//		LocalDateTime nowUtc = timeZoneConverter.convertToUTC(LocalDateTime.now(), "Australia/Sydney").withNano(0);
+		LocalDateTime nowUtc = LocalDateTime.now().withNano(0);
 
 		System.out.println("current UTC" + nowUtc);
 		scheduleRepository.deleteByDatetimeBefore(nowUtc);

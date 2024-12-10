@@ -43,7 +43,8 @@ public class SlotController {
 		List<Slot> slots = slotService.getSlots(capacity, date, time);
 		
 		if(slots.isEmpty()) {
-			return new ResponseEntity<>(Map.of("error", "No slots available for the given capacity"), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(Map.of("error", String.format("No slots available for capacity: %d, date: %s, time: %s", 
+			          capacity, date, time)), HttpStatus.NOT_FOUND);
 		}
 	
 				List<SlotResponse> avaialbeSlots = slots.stream()
