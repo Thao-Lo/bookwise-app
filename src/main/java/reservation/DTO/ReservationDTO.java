@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReservationDTO {
-	private String sessionId;
-	private long slotId;
+//	private String sessionId;
+	private long id;
 	private String tableName;
 	private int capacity;
 	private LocalDate date;

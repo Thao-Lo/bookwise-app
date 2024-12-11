@@ -27,7 +27,7 @@ public class GuestReservationController {
 	@PostMapping("/create")
 	public ResponseEntity<Object> createReservation(@RequestBody ReservationDTO reservationDTO){
 		String sessionId = redisService.saveReservation(reservationDTO);
-		
+		System.out.println("reservation DTO" + reservationDTO);
 		return new ResponseEntity<>
 		(Map.of("message", "Reservation is on hold",
 				"sessionId", sessionId,

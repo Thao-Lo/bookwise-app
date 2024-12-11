@@ -50,7 +50,9 @@ public class SlotController {
 				List<SlotResponse> avaialbeSlots = slots.stream()
 				.map(slot -> {
 						LocalDateTime localDateTime = timeZoneConverter.convertToLocalTime(slot.getSchedule().getDatetime(), "Australia/Sydney");
-						return new SlotResponse(slot.getSeat().getSeatName(),
+						return new SlotResponse(
+						slot.getId(),
+						slot.getSeat().getSeatName(),
 						slot.getSeat().getCapacity(),
 						localDateTime.toLocalDate(),
 						localDateTime.toLocalTime()					

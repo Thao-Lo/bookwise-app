@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SlotResponse {
+	private long id;
 	private String tableName;
 	private int capacity;
 	private LocalDate date;
