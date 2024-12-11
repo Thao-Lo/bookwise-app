@@ -40,4 +40,7 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
 	@Query("SELECT s FROM Slot s WHERE s.seat.capacity = :capacity AND FUNCTION('DATE', s.schedule.datetime) = :date AND FUNCTION('TIME', s.schedule.datetime) = :time AND s.status = 'AVAILABLE'")
 	List<Slot> getSlotsBySeatCapacityAndDateAndTime(@Param("capacity") int capacity, @Param("date") LocalDate date,
 			@Param("time") LocalTime time);
+	
+	@Query("SELECT COUNT(s) > 0 FROM Slot s WHERE s.id = :id AND s.status = 'AVAILABLE'")
+	boolean isSlotAvailable(@Param("id") long slotId);
 }

@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,12 +33,13 @@ public class RedisService {
 		redisTemplate.opsForHash().put(key, "capacity", String.valueOf(reservationDTO.getCapacity()));
 		redisTemplate.opsForHash().put(key, "date", reservationDTO.getDate().toString());
 		redisTemplate.opsForHash().put(key, "time", reservationDTO.getTime().toString());
+		redisTemplate.opsForHash().put(key, "status", "HOLDING");
 		redisTemplate.expire(key, Duration.ofSeconds(TTL));
 		System.out.println("reservation:" + sessionId + " " + reservationDTO.getId() + " " + reservationDTO.getTableName() );
 		return sessionId;
 	}
 
-	public ReservationDTO getReservation(String sessionId) {
+	public Map<String, Object> getReservation(String sessionId) {
 		String key = "reservation:" + sessionId;
 
 		// return type is object, alsways String -> casting
@@ -45,8 +48,10 @@ public class RedisService {
 		String capacity = (String) redisTemplate.opsForHash().get(key, "capacity");
 		String date = (String) redisTemplate.opsForHash().get(key, "date");
 		String time = (String) redisTemplate.opsForHash().get(key, "time");
-	
-		if (id == null || tableName == null || capacity == null || date == null || time == null) {
+		String status = (String) redisTemplate.opsForHash().get(key, "status");
+		
+//	    Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+		if (id == null || tableName == null || capacity == null || date == null || time == null || status == null) {
 			throw new IllegalArgumentException("Session data not found or expired.");
 		}
 		ReservationDTO reservationDTO = new ReservationDTO();
@@ -56,8 +61,11 @@ public class RedisService {
 		reservationDTO.setCapacity(Integer.parseInt(capacity));
 		reservationDTO.setDate(LocalDate.parse(date));
 		reservationDTO.setTime(LocalTime.parse(time));
-
-		return reservationDTO;
+		Map<String, Object> reservationResult = new HashMap<>();
+		
+		reservationResult.put("reservation", reservationDTO);
+		reservationResult.put("status", status);
+		return reservationResult;
 	}
 
 	public Long getRemainingTTL(String sessionId) {

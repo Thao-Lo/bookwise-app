@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import reservation.DTO.ReservationDTO;
+import reservation.Service.GuestReservationService;
 import reservation.Service.RedisService;
 
 @RestController
@@ -21,12 +22,24 @@ import reservation.Service.RedisService;
 public class GuestReservationController {
 	@Autowired
 	private RedisService redisService;
+	@Autowired 
+	GuestReservationService guestReservationService;
 	
 	private static final long TTL = 300; // Time to live 5 mins
 
 	@PostMapping("/create")
 	public ResponseEntity<Object> createReservation(@RequestBody ReservationDTO reservationDTO){
+		String slotKey = "slot:" + reservationDTO.getId();
+		
+		boolean isSlotLock = guestReservationService.isSlotReserve(slotKey);
+		
+		if(!isSlotLock) {
+			return new ResponseEntity<>
+			(Map.of("message", "Slot is already being held by another user."), HttpStatus.CONFLICT);	
+		}
+		
 		String sessionId = redisService.saveReservation(reservationDTO);
+		
 		System.out.println("reservation DTO" + reservationDTO);
 		return new ResponseEntity<>
 		(Map.of("message", "Reservation is on hold",
@@ -40,11 +53,25 @@ public class GuestReservationController {
 		if(principal == null) {
 			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."), HttpStatus.OK);		
 		}
-		ReservationDTO reservationDTO = redisService.getReservation(sessionId);
+		System.out.println("principal name: " + principal.getName());
+		ReservationDTO reservationDTO = (ReservationDTO) redisService.getReservation(sessionId).get("reservation");
+		String status = (String) redisService.getReservation(sessionId).get("status");
 		
 	return new ResponseEntity<>
-		(Map.of("reservation", reservationDTO,"remainingTime", redisService.getRemainingTTL(sessionId)), HttpStatus.OK);		
+		(Map.of(
+				"reservation", reservationDTO,
+				"remainingTime", redisService.getRemainingTTL(sessionId),
+				"status", status
+				), HttpStatus.OK);		
 	}
-	
+	@PostMapping("/confirm")
+	public ResponseEntity<Object> confirmReservation(@RequestParam String sessionId, Principal principal) {
+		if(principal == null) {
+			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."), HttpStatus.OK);		
+		}
+		
+		return new ResponseEntity<>
+		(Map.of("status", "ok"), HttpStatus.OK);		
+	}
 	
 }
