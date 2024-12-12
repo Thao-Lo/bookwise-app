@@ -1,5 +1,6 @@
 package reservation.Service;
 
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -9,8 +10,14 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
+import reservation.Entity.GuestReservation;
+import reservation.Entity.Slot;
+import reservation.Entity.Slot.Status;
+import reservation.Entity.User;
 import reservation.Repository.GuestReservationRepository;
 import reservation.Repository.SlotRepository;
+import reservation.Repository.UserRepository;
 
 @Service
 public class GuestReservationService {
@@ -19,6 +26,9 @@ public class GuestReservationService {
 
 	@Autowired
 	SlotRepository slotRepository;
+
+	@Autowired
+	UserRepository userRepository;
 
 	@Autowired
 	private RedisService redisService;
@@ -54,5 +64,32 @@ public class GuestReservationService {
 
 	public boolean isSlotAvailable(Long slotId) {
 		return slotRepository.isSlotAvailable(slotId);
+	}
+
+	@Transactional // modify multiple entries slot and reservation
+	public void saveNewReservation(String username, Long slotId, Integer capacity) {
+		if (username == null) {
+		    throw new IllegalArgumentException("Username cannot be null");
+		}
+		if (slotId == null) {
+		    throw new IllegalArgumentException("Slot ID cannot be null");
+		}
+		if (capacity == null) {
+		    throw new IllegalArgumentException("Capacity cannot be null");
+		}
+		User user = userRepository.findByUsername(username);
+		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
+		if(slot.getStatus() == Status.UNAVAILABLE){
+			 throw new IllegalArgumentException("Slot is unavailable");
+		}
+		GuestReservation reservation = new GuestReservation();
+		reservation.setUser(user);
+		reservation.setSlot(slot);
+		reservation.setNumberOfGuests(capacity);
+		reservation.setStatus(GuestReservation.Status.BOOKED);
+		guestReservationRepository.save(reservation);
+		
+		slot.setStatus(Status.UNAVAILABLE);
+		slotRepository.save(slot);
 	}
 }

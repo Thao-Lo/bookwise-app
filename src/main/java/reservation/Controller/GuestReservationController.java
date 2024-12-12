@@ -18,60 +18,68 @@ import reservation.Service.GuestReservationService;
 import reservation.Service.RedisService;
 
 @RestController
-@RequestMapping("/api/v1/reservation")
+@RequestMapping("/api/v1/")
 public class GuestReservationController {
 	@Autowired
 	private RedisService redisService;
-	@Autowired 
+	@Autowired
 	GuestReservationService guestReservationService;
-	
+
 	private static final long TTL = 300; // Time to live 5 mins
 
-	@PostMapping("/create")
-	public ResponseEntity<Object> createReservation(@RequestBody ReservationDTO reservationDTO){
+	@PostMapping("reservation/create")
+	public ResponseEntity<Object> createReservation(@RequestBody ReservationDTO reservationDTO) {
 		String slotKey = "slot:" + reservationDTO.getId();
-		
+
 		boolean isSlotLock = guestReservationService.isSlotReserve(slotKey);
-		
-		if(!isSlotLock) {
-			return new ResponseEntity<>
-			(Map.of("message", "Slot is already being held by another user."), HttpStatus.CONFLICT);	
+
+		if (!isSlotLock) {
+			return new ResponseEntity<>(Map.of("message", "Slot is already being held by another user."),
+					HttpStatus.CONFLICT);
 		}
-		
+
 		String sessionId = redisService.saveReservation(reservationDTO);
-		
+
 		System.out.println("reservation DTO" + reservationDTO);
-		return new ResponseEntity<>
-		(Map.of("message", "Reservation is on hold",
-				"sessionId", sessionId,
-				"remainingTime", TTL), HttpStatus.OK);		
+		return new ResponseEntity<>(
+				Map.of("message", "Reservation is on hold", "sessionId", sessionId, "remainingTime", TTL),
+				HttpStatus.OK);
 	}
-	
-	@GetMapping("/retrieve")
-	public ResponseEntity<Object> retrieveReservation(@RequestParam String sessionId, Principal principal){
-		//accessToken
-		if(principal == null) {
-			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."), HttpStatus.OK);		
+
+	@GetMapping("/user/reservation/retrieve")
+	public ResponseEntity<Object> retrieveReservation(@RequestParam String sessionId, Principal principal) {
+		// accessToken
+		if (principal == null) {
+			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
+					HttpStatus.OK);
 		}
 		System.out.println("principal name: " + principal.getName());
 		ReservationDTO reservationDTO = (ReservationDTO) redisService.getReservation(sessionId).get("reservation");
 		String status = (String) redisService.getReservation(sessionId).get("status");
-		
-	return new ResponseEntity<>
-		(Map.of(
-				"reservation", reservationDTO,
-				"remainingTime", redisService.getRemainingTTL(sessionId),
-				"status", status
-				), HttpStatus.OK);		
+
+		return new ResponseEntity<>(Map.of("reservation", reservationDTO, "remainingTime",
+				redisService.getRemainingTTL(sessionId), "status", status), HttpStatus.OK);
 	}
-	@PostMapping("/confirm")
+
+	@PostMapping("/user/reservation/confirm")
 	public ResponseEntity<Object> confirmReservation(@RequestParam String sessionId, Principal principal) {
-		if(principal == null) {
-			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."), HttpStatus.OK);		
+		if (principal == null) {
+			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
+					HttpStatus.UNAUTHORIZED);
 		}
-		
-		return new ResponseEntity<>
-		(Map.of("status", "ok"), HttpStatus.OK);		
+		Map<String, Object> reservationData = redisService.getReservation(sessionId);
+
+		if (reservationData == null || !reservationData.containsKey("reservation")) {
+			return new ResponseEntity<>(Map.of("error", "Session not found or expired"), HttpStatus.BAD_REQUEST);
+		}
+
+		ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
+		boolean isSlotAvailable = guestReservationService.isSlotAvailable(reservationDTO.getId());
+		if (!isSlotAvailable) {
+			return new ResponseEntity<>(Map.of("error", "Slot is no longer available"), HttpStatus.NOT_FOUND);
+		}
+		guestReservationService.saveNewReservation(principal.getName(), reservationDTO.getId(),
+				reservationDTO.getCapacity());
+		return new ResponseEntity<>(Map.of("message", "Your booking is completed"), HttpStatus.OK);
 	}
-	
 }
