@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,8 @@ public class GuestReservationController {
 	private RedisService redisService;
 	@Autowired
 	GuestReservationService guestReservationService;
+	@Autowired
+	private RedisTemplate<String, Object> redisTemplate;
 
 	private static final long TTL = 300; // Time to live 5 mins
 
@@ -72,14 +75,20 @@ public class GuestReservationController {
 		if (reservationData == null || !reservationData.containsKey("reservation")) {
 			return new ResponseEntity<>(Map.of("error", "Session not found or expired"), HttpStatus.BAD_REQUEST);
 		}
-
-		ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
-		boolean isSlotAvailable = guestReservationService.isSlotAvailable(reservationDTO.getId());
-		if (!isSlotAvailable) {
-			return new ResponseEntity<>(Map.of("error", "Slot is no longer available"), HttpStatus.NOT_FOUND);
+		// change status from HOLDING to CONFIRMING
+		redisService.setStatusToConfirming(sessionId);
+		try {
+			ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
+			boolean isSlotAvailable = guestReservationService.isSlotAvailable(reservationDTO.getId());
+			if (!isSlotAvailable) {
+				return new ResponseEntity<>(Map.of("error", "Slot is no longer available"), HttpStatus.NOT_FOUND);
+			}
+			guestReservationService.saveNewReservation(principal.getName(), reservationDTO.getId(),
+					reservationDTO.getCapacity());
+		} finally {
+			redisService.deleteKey(sessionId);
 		}
-		guestReservationService.saveNewReservation(principal.getName(), reservationDTO.getId(),
-				reservationDTO.getCapacity());
+
 		return new ResponseEntity<>(Map.of("message", "Your booking is completed"), HttpStatus.OK);
 	}
 }

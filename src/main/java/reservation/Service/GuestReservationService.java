@@ -1,8 +1,5 @@
 package reservation.Service;
 
-import java.util.Optional;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.redisson.api.RLock;
@@ -29,9 +26,6 @@ public class GuestReservationService {
 
 	@Autowired
 	UserRepository userRepository;
-
-	@Autowired
-	private RedisService redisService;
 
 	@Autowired
 	private RedissonClient redissonClient;
@@ -80,8 +74,10 @@ public class GuestReservationService {
 		User user = userRepository.findByUsername(username);
 		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
 		if(slot.getStatus() == Status.UNAVAILABLE){
-			 throw new IllegalArgumentException("Slot is unavailable");
+			 throw new IllegalArgumentException("Slot is no longer available");
 		}
+		//ALTER TABLE guest_reservation ADD CONSTRAINT unique_user_slot UNIQUE (user_id, slot_id);
+
 		GuestReservation reservation = new GuestReservation();
 		reservation.setUser(user);
 		reservation.setSlot(slot);
@@ -90,6 +86,7 @@ public class GuestReservationService {
 		guestReservationRepository.save(reservation);
 		
 		slot.setStatus(Status.UNAVAILABLE);
-		slotRepository.save(slot);
+		slotRepository.save(slot);		
+		
 	}
 }

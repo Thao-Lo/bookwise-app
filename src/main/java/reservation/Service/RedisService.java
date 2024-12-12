@@ -35,7 +35,8 @@ public class RedisService {
 		redisTemplate.opsForHash().put(key, "time", reservationDTO.getTime().toString());
 		redisTemplate.opsForHash().put(key, "status", "HOLDING");
 		redisTemplate.expire(key, Duration.ofSeconds(TTL));
-		System.out.println("reservation:" + sessionId + " " + reservationDTO.getId() + " " + reservationDTO.getTableName() );
+		System.out.println(
+				"reservation:" + sessionId + " " + reservationDTO.getId() + " " + reservationDTO.getTableName());
 		return sessionId;
 	}
 
@@ -49,7 +50,7 @@ public class RedisService {
 		String date = (String) redisTemplate.opsForHash().get(key, "date");
 		String time = (String) redisTemplate.opsForHash().get(key, "time");
 		String status = (String) redisTemplate.opsForHash().get(key, "status");
-		
+
 //	    Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
 		if (id == null || tableName == null || capacity == null || date == null || time == null || status == null) {
 			throw new IllegalArgumentException("Session data not found or expired.");
@@ -62,12 +63,24 @@ public class RedisService {
 		reservationDTO.setDate(LocalDate.parse(date));
 		reservationDTO.setTime(LocalTime.parse(time));
 		Map<String, Object> reservationResult = new HashMap<>();
-		
+
 		reservationResult.put("reservation", reservationDTO);
 		reservationResult.put("status", status);
 		return reservationResult;
 	}
 
+	public void setStatusToConfirming(String sessionId) {
+		String key = "reservation:" + sessionId;
+		String status = (String) redisTemplate.opsForHash().get(key, "status");
+		if(!status.equals("HOLDING") || status == null) {
+			  throw new IllegalStateException("Reservation is not in a valid state for confirmation.");
+		}
+		redisTemplate.opsForHash().put(key, "status", "HOLDING");
+	}
+	public void deleteKey(String sessionId) {
+		String key = "reservation:" + sessionId;
+		redisTemplate.delete(key);
+	}
 	public Long getRemainingTTL(String sessionId) {
 		String key = "reservation:" + sessionId;
 		return redisTemplate.getExpire(key);
