@@ -56,7 +56,7 @@ public class AdminUserController {
 			return new ResponseEntity<>(Map.of(
 					"users" , userPage,
 					"currentPage", users.getNumber(),
-					"numberOfUserPerPage", users.getNumberOfElements(),
+					"usersPerPage", users.getNumberOfElements(),
 					"totalPages", users.getTotalPages(),
 					"totalUsers", users.getTotalElements()), HttpStatus.OK);
 		}
