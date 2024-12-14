@@ -50,7 +50,7 @@ public class LoginController {
 		response.put("message", "Login successfully.");
 		response.put("accessToken", accessToken);
 		response.put("refreshToken", refreshToken);
-		response.put("user", new UserResponse(user.getUsername(), user.getEmail(), user.getRole().name()));
+		response.put("user", new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()));
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

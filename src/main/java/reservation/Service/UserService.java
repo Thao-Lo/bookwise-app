@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import reservation.Entity.User;
+import reservation.Entity.User.Role;
 import reservation.Repository.UserRepository;
 
 @Service
@@ -41,6 +43,20 @@ public class UserService {
 	public User findUserByUsernameOrEmail(String usernameorEmail) {
 		return userRepository.findByUsernameOrEmail(usernameorEmail, usernameorEmail);
 	}
+	
+	public User findUserById(Long id) {		
+		return userRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("User not found"));
+	}
+	
+	public boolean isValidRole(String role) {
+		for(Role r : Role.values()) {
+			if(r.name().equalsIgnoreCase(role)) {
+				return true;
+			}
+		}
+		return false;
+	}
 //	public Boolean isValidEmailPattern(String email) {
 //		String emailPattern = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,63}$";
 //		Pattern pattern = Pattern.compile(emailPattern);
@@ -59,6 +75,10 @@ public class UserService {
 	}
 	public User saveUser(User user) {
 		user.setPassword(hashedPassword(user.getPassword()));
+		return userRepository.save(user);
+	}
+	@Transactional
+	public User updateUserRole(User user) {
 		return userRepository.save(user);
 	}
 	public String generateVerificationCode() {
