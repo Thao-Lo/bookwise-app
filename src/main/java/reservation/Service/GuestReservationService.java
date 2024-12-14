@@ -5,10 +5,14 @@ import java.util.concurrent.TimeUnit;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import reservation.Entity.GuestReservation;
+import reservation.Entity.Schedule;
 import reservation.Entity.Slot;
 import reservation.Entity.Slot.Status;
 import reservation.Entity.User;
@@ -29,7 +33,11 @@ public class GuestReservationService {
 
 	@Autowired
 	private RedissonClient redissonClient;
-
+	
+	public Page<GuestReservation> getAllReservation(int page, int size){
+		Pageable pageable = PageRequest.of(page, size);
+		return guestReservationRepository.findAll(pageable);
+	}
 	public boolean isSlotReserve(String slotKey) {
 		String lockKey = "lock:" + slotKey;
 		RLock lock = redissonClient.getLock(lockKey);

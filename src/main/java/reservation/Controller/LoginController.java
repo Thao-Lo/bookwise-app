@@ -33,8 +33,7 @@ public class LoginController {
 
 	@PostMapping("/login")
 	public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {
-		User user = userService.findUserByUsernameOrEmail(request.getUsernameOrEmail());
-
+		User user = userService.findUserByUsernameOrEmail(request.getUsernameOrEmail());		
 		if (user == null) {
 			return new ResponseEntity<>(Map.of("error", "Invalid Username or Email."), HttpStatus.BAD_REQUEST);
 		}

@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import reservation.Entity.Schedule;
@@ -32,6 +35,11 @@ public class SlotService {
 
 	@Autowired
 	TimeZoneConverter timeZoneConverter;
+
+	public Page<Slot> getAllSlots(int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		return slotRepository.findAll(pageable);
+	}
 
 	public void generateSlots() {
 		List<Schedule> schedules = scheduleRepository.findAll();
@@ -62,57 +70,57 @@ public class SlotService {
 
 	public List<Slot> getSlots(Integer capacity, LocalDate date, LocalTime time) {
 
-	    int[] capacities = {2, 4, 6};
+		int[] capacities = { 2, 4, 6 };
 
-	    // Default capacity if null 
-	    if (capacity == null) {
-	        capacity = capacities[0]; // Default to smallest capacity
-	    }
+		// Default capacity if null
+		if (capacity == null) {
+			capacity = capacities[0]; // Default to smallest capacity
+		}
 
-	    // Normalize capacity
-	    capacity = normalizeCapacity(capacity, capacities);
-	    if (capacity == null) {
-	        return Collections.emptyList(); // Invalid capacity
-	    }
+		// Normalize capacity
+		capacity = normalizeCapacity(capacity, capacities);
+		if (capacity == null) {
+			return Collections.emptyList(); // Invalid capacity
+		}
 
-	    // Case 1: All parameters are null
-	    if (date == null && time == null) {
-	        return slotRepository.getSlotsBySeatCapacity(capacity);
-	    }
+		// Case 1: All parameters are null
+		if (date == null && time == null) {
+			return slotRepository.getSlotsBySeatCapacity(capacity);
+		}
 
-	    // Case 2: time == null && date != null
-	    if (time == null) {
-	        return slotRepository.getSlotsBySeatCapacityAndDate(capacity, date);
-	    }
+		// Case 2: time == null && date != null
+		if (time == null) {
+			return slotRepository.getSlotsBySeatCapacityAndDate(capacity, date);
+		}
 
-	    // Case 3: time != null && date == null 
-	    if (date == null && time != null) {
-	        LocalDate today = LocalDate.now();
-	        List<LocalDate> dates = today.datesUntil(today.plusDays(30)).collect(Collectors.toList());
-	        List<Slot> availableSlots = new ArrayList<>();
+		// Case 3: time != null && date == null
+		if (date == null && time != null) {
+			LocalDate today = LocalDate.now();
+			List<LocalDate> dates = today.datesUntil(today.plusDays(30)).collect(Collectors.toList());
+			List<Slot> availableSlots = new ArrayList<>();
 
-	        for (LocalDate searchDate : dates) {
-	            LocalTime utcTime = timeZoneConverter.convertTimeToUTC(searchDate, time, "Australia/Sydney");
-	            System.out.println("UTC time for date " + searchDate + ": " + utcTime);
-	            LocalDateTime localDateTime = LocalDateTime.of(searchDate, utcTime);
-	            List<Slot> slots = slotRepository.getSlotBySeatCapacityAndTime(capacity, localDateTime);
-	            if (slots != null) {
-	                availableSlots.addAll(slots);
-	            }
-	        }
+			for (LocalDate searchDate : dates) {
+				LocalTime utcTime = timeZoneConverter.convertTimeToUTC(searchDate, time, "Australia/Sydney");
+				System.out.println("UTC time for date " + searchDate + ": " + utcTime);
+				LocalDateTime localDateTime = LocalDateTime.of(searchDate, utcTime);
+				List<Slot> slots = slotRepository.getSlotBySeatCapacityAndTime(capacity, localDateTime);
+				if (slots != null) {
+					availableSlots.addAll(slots);
+				}
+			}
 
-	        return availableSlots;
-	    }
-	    // Case 4: All parameters are provided
-	    if (date != null && time != null) {
-	        LocalTime utcTime = timeZoneConverter.convertTimeToUTC(date, time, "Australia/Sydney");
-	        System.out.println("Converted time to UTC: " + utcTime);
-	        return slotRepository.getSlotsBySeatCapacityAndDateAndTime(capacity, date, utcTime);
-	    }
+			return availableSlots;
+		}
+		// Case 4: All parameters are provided
+		if (date != null && time != null) {
+			LocalTime utcTime = timeZoneConverter.convertTimeToUTC(date, time, "Australia/Sydney");
+			System.out.println("Converted time to UTC: " + utcTime);
+			return slotRepository.getSlotsBySeatCapacityAndDateAndTime(capacity, date, utcTime);
+		}
 
-	    // Fallback (should not occur)
-	    return Collections.emptyList();
-	
+		// Fallback (should not occur)
+		return Collections.emptyList();
+
 	}
 
 	private Integer normalizeCapacity(Integer capacity, int[] capacities) {

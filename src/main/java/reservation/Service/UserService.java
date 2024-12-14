@@ -80,7 +80,7 @@ public class UserService {
 		BCryptPasswordEncoder encoder =  new BCryptPasswordEncoder();
 		return encoder.encode(password);
 	}
-	public User saveUser(User user) {
+	public User saveUser(User user) {	
 		user.setPassword(hashedPassword(user.getPassword()));
 		return userRepository.save(user);
 	}

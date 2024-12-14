@@ -16,5 +16,16 @@ public class ReservationDTO {
 	private String tableName;
 	private int capacity;
 	private LocalDate date;
-	private LocalTime time;		
+	private LocalTime time;	
+	private String status;
+	
+	public ReservationDTO(long id, String tableName, int capacity, LocalDate date, LocalTime time) {
+		super();
+		this.id = id;
+		this.tableName = tableName;
+		this.capacity = capacity;
+		this.date = date;
+		this.time = time;
+	}
+	
 }

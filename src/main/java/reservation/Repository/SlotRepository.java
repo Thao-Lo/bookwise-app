@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +18,7 @@ import reservation.Entity.Seat;
 import reservation.Entity.Slot;
 
 public interface SlotRepository extends JpaRepository<Slot, Long> {
+	Page<Slot> findAll(Pageable pageable);
 	@Query("SELECT COUNT(s) > 0 FROM Slot s WHERE s.seat = :seat AND s.schedule= :schedule")
 	boolean existsBySeatAndSchedule(@Param("seat") Seat seat, @Param("schedule") Schedule schedule);
 	
