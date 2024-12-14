@@ -1,5 +1,8 @@
    package reservation.Repository;
 
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import reservation.Entity.User;
@@ -10,4 +13,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	User findByEmail(String email);
 	
 	User findByUsernameOrEmail(String username, String email);
+	
+	Page<User> findAll(Pageable pageable);
 }

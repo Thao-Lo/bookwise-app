@@ -6,6 +6,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +25,10 @@ public class UserService {
 
 	public List<User> showAllUsers() {
 		return userRepository.findAll();
+	}
+	public Page<User> showAllUsers(int page, int size){
+		Pageable pageable = PageRequest.of(page, size);
+		return userRepository.findAll(pageable);
 	}
 
 //	public Boolean isValidUsernameLength(String username) {
