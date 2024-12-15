@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -22,7 +23,9 @@ public class UserService {
 
 	@Autowired
 	UserRepository userRepository;
-
+	@Autowired
+	PasswordEncoder passwordEncoder;
+	
 	public List<User> showAllUsers() {
 		return userRepository.findAll();
 	}
@@ -79,11 +82,10 @@ public class UserService {
 //		return matcher.matches();
 //	}
 	public String hashedPassword(String password) {
-		BCryptPasswordEncoder encoder =  new BCryptPasswordEncoder();
-		return encoder.encode(password);
+//		BCryptPasswordEncoder encoder =  new BCryptPasswordEncoder();
+		return passwordEncoder.encode(password);
 	}
-	public User saveUser(User user) {	
-		user.setPassword(hashedPassword(user.getPassword()));
+	public User saveUser(User user) {			
 		return userRepository.save(user);
 	}
 	@Transactional

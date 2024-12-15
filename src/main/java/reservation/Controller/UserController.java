@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,9 +27,11 @@ import reservation.Service.UserService;
 public class UserController {
 	@Autowired
 	UserService userService;
-
 	@Autowired
 	EmailService emailService;
+	@Autowired
+	PasswordEncoder passwordEncoder;
+	
 
 	@PostMapping("/register")
 	public ResponseEntity<String> registerNewUser(@Valid @RequestBody RegisterRequest request) {
@@ -43,13 +46,16 @@ public class UserController {
 		if (!request.getPassword().equals(request.getConfirmPassword())) {
 			return new ResponseEntity<>("Passwords are not matched", HttpStatus.BAD_REQUEST);
 		}
+		System.out.println("register password: " + request.getPassword());
+		System.out.println("Hashed password (register): " + passwordEncoder.encode(request.getPassword()));
+		
 		String verificationCode = userService.generateVerificationCode();
 
 		// save to db
 		User user = new User();
 		user.setUsername(request.getUsername());
 		user.setEmail(request.getEmail());
-		user.setPassword(request.getPassword());
+		user.setPassword(passwordEncoder.encode(request.getPassword()));
 		user.setRole(Role.valueOf(request.getRole() != null ? request.getRole() : "GUEST"));
 		user.setVerificationCode(verificationCode);
 		user.setEmailVerified(false);

@@ -6,7 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,20 +30,27 @@ public class LoginController {
 	UserService userService;
 	@Autowired
 	JwtUtil jwtUtil;
-
+	
+	@Autowired
+	PasswordEncoder passwordEncoder;
+	
 	@PostMapping("/login")
 	public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {
-		User user = userService.findUserByUsernameOrEmail(request.getUsernameOrEmail());		
+		User user = userService.findUserByUsernameOrEmail(request.getUsernameOrEmail());
 		if (user == null) {
 			return new ResponseEntity<>(Map.of("error", "Invalid Username or Email."), HttpStatus.BAD_REQUEST);
 		}
-		if(!userService.isEmailVerified(user.getId())) {
-			return new ResponseEntity<>(Map.of("error", "Email not verified.Please Verified your email before login."), HttpStatus.BAD_REQUEST);
-		}	
+		if (!userService.isEmailVerified(user.getId())) {
+			return new ResponseEntity<>(Map.of("error", "Email not verified.Please Verified your email before login."),
+					HttpStatus.BAD_REQUEST);
+		}
+		System.out.println("Login password: " + request.getPassword());
+		System.out.println("Password in DB (hashed): " + user.getPassword());
+		System.out.println("Password matches: " + passwordEncoder.matches(request.getPassword(), user.getPassword()));
 		
 		// compare raw password with hashed password in db -> matches
-		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-		if (!encoder.matches(request.getPassword(), user.getPassword())) {
+//		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
 			return new ResponseEntity<>(Map.of("error", "Incorrect password."), HttpStatus.BAD_REQUEST);
 		}
 		String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole().toString());
@@ -53,7 +60,8 @@ public class LoginController {
 		response.put("message", "Login successfully.");
 		response.put("accessToken", accessToken);
 		response.put("refreshToken", refreshToken);
-		response.put("user", new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()));
+		response.put("user",
+				new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()));
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

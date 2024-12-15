@@ -4,7 +4,6 @@ import java.security.Principal;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import reservation.DTO.ReservationDTO;
+import reservation.Entity.GuestReservation;
+import reservation.Service.EmailService;
 import reservation.Service.GuestReservationService;
 import reservation.Service.RedisService;
 
@@ -24,9 +25,9 @@ public class GuestReservationController {
 	@Autowired
 	private RedisService redisService;
 	@Autowired
-	GuestReservationService guestReservationService;
+	GuestReservationService guestReservationService;	
 	@Autowired
-	private RedisTemplate<String, Object> redisTemplate;
+	EmailService emailService;
 
 	private static final long TTL = 300; // Time to live 5 mins
 
@@ -75,20 +76,29 @@ public class GuestReservationController {
 		if (reservationData == null || !reservationData.containsKey("reservation")) {
 			return new ResponseEntity<>(Map.of("error", "Session not found or expired"), HttpStatus.BAD_REQUEST);
 		}
+		
 		// change status from HOLDING to CONFIRMING
 		redisService.setStatusToConfirming(sessionId);
-		try {
+		
+		try {			
 			ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
+			
 			boolean isSlotAvailable = guestReservationService.isSlotAvailable(reservationDTO.getId());
+			
 			if (!isSlotAvailable) {
 				return new ResponseEntity<>(Map.of("error", "Slot is no longer available"), HttpStatus.NOT_FOUND);
 			}
+			
 			guestReservationService.saveNewReservation(principal.getName(), reservationDTO.getId(),
 					reservationDTO.getCapacity());
+			
+//			//send confirmation Email
+//			GuestReservation reservation = guestReservationService.findReservationById(reservationDTO.getId());
+//			emailService.sendBookingConfirmation(reservation);
 		} finally {
 			redisService.deleteKey(sessionId);
 		}
 
-		return new ResponseEntity<>(Map.of("message", "Your booking is completed"), HttpStatus.OK);
+		return new ResponseEntity<>(Map.of("message", "Your booking is completed. Please check your email for booking confirmation"), HttpStatus.OK);
 	}
 }

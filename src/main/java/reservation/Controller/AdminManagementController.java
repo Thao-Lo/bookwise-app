@@ -49,25 +49,22 @@ public class AdminManagementController {
 	GuestReservationService guestReservationService;
 	@Autowired
 	TimeZoneConverter timeZoneConverter;
-	
-	@PreAuthorize("hasRole('ADMIN')") 
+
+	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/seats")
 	public ResponseEntity<Object> getAllSeats(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
 		Page<Seat> seats = seatService.getAllSeat(page, size);
 		if (seats.isEmpty()) {
 			return new ResponseEntity<>(Map.of("Error", "No seats found"), HttpStatus.NOT_FOUND);
-		}		
-		return new ResponseEntity<>(Map.of(
-				"seats", seats.getContent(),
-				"seatsPerPage", seats.getNumberOfElements(),
-				"currentPage", seats.getNumber(),
-				"totalPage", seats.getTotalPages(),
-				"totalSeats", seats.getTotalElements()
-				), HttpStatus.OK);
+		}
+		return new ResponseEntity<>(
+				Map.of("seats", seats.getContent(), "seatsPerPage", seats.getNumberOfElements(), "currentPage",
+						seats.getNumber(), "totalPage", seats.getTotalPages(), "totalSeats", seats.getTotalElements()),
+				HttpStatus.OK);
 	}
-	
-	@PreAuthorize("hasRole('ADMIN')") 
+
+	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/dates")
 	public ResponseEntity<Object> getAllDates(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
@@ -75,95 +72,83 @@ public class AdminManagementController {
 		if (schedulesPage.isEmpty()) {
 			return new ResponseEntity<>(Map.of("Error", "No Dates found"), HttpStatus.NOT_FOUND);
 		}
-		List<ScheduleResponse> scheduleResponses = schedulesPage.getContent().stream().map(
-				schedule -> {
-					LocalDateTime datetime = timeZoneConverter.convertToLocalTime(schedule.getDatetime(), "Australia/Sydney");
-					ScheduleResponse scheduleResponse = new ScheduleResponse();
-					scheduleResponse.setId(schedule.getId());
-					scheduleResponse.setDate(datetime.toLocalDate());
-					scheduleResponse.setTime(datetime.toLocalTime());
-					return scheduleResponse;
-				}).toList(); 
-		
-		return new ResponseEntity<>(Map.of(
-				"dates", scheduleResponses,
-				"datesPerPage", schedulesPage.getNumberOfElements(),
-				"currentPage", schedulesPage.getNumber(),
-				"totalPage", schedulesPage.getTotalPages(),
-				"totalDates", schedulesPage.getTotalElements()
-				), HttpStatus.OK);
+		List<ScheduleResponse> scheduleResponses = schedulesPage.getContent().stream().map(schedule -> {
+			LocalDateTime datetime = timeZoneConverter.convertToLocalTime(schedule.getDatetime(), "Australia/Sydney");
+			ScheduleResponse scheduleResponse = new ScheduleResponse();
+			scheduleResponse.setId(schedule.getId());
+			scheduleResponse.setDate(datetime.toLocalDate());
+			scheduleResponse.setTime(datetime.toLocalTime());
+			return scheduleResponse;
+		}).toList();
+
+		return new ResponseEntity<>(Map.of("dates", scheduleResponses, "datesPerPage",
+				schedulesPage.getNumberOfElements(), "currentPage", schedulesPage.getNumber(), "totalPage",
+				schedulesPage.getTotalPages(), "totalDates", schedulesPage.getTotalElements()), HttpStatus.OK);
 	}
-	
-	@PreAuthorize("hasRole('ADMIN')") 
+
+	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/slots")
 	public ResponseEntity<Object> getAllSlots(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
 		Page<Slot> slotsPage = slotService.getAllSlots(page, size);
 		if (slotsPage.isEmpty()) {
 			return new ResponseEntity<>(Map.of("Error", "No Slots found"), HttpStatus.NOT_FOUND);
-		}		
-		List<SlotResponse> SlotResponses = slotsPage.getContent().stream().map(
-				slot -> {
-					LocalDateTime datetime = timeZoneConverter.convertToLocalTime(slot.getSchedule().getDatetime(), "Australia/Sydney");
-					SlotResponse slotResponse = new SlotResponse();
-					slotResponse.setId(slot.getId());
-					slotResponse.setTableName(slot.getSeat().getSeatName());
-					slotResponse.setCapacity(slot.getSeat().getCapacity());
-					slotResponse.setDate(datetime.toLocalDate());
-					slotResponse.setTime(datetime.toLocalTime());
-					slotResponse.setStatus(slot.getStatus().name());					
-					return slotResponse;
-				}).toList(); 
-		return new ResponseEntity<>(Map.of(
-				"slots", SlotResponses,
-				"slotsPerPage", slotsPage.getNumberOfElements(),
-				"currentPage", slotsPage.getNumber(),
-				"totalPage", slotsPage.getTotalPages(),
-				"totalSlots", slotsPage.getTotalElements()
-				), HttpStatus.OK);
+		}
+		List<SlotResponse> SlotResponses = slotsPage.getContent().stream().map(slot -> {
+			LocalDateTime datetime = timeZoneConverter.convertToLocalTime(slot.getSchedule().getDatetime(),
+					"Australia/Sydney");
+			SlotResponse slotResponse = new SlotResponse();
+			slotResponse.setId(slot.getId());
+			slotResponse.setTableName(slot.getSeat().getSeatName());
+			slotResponse.setCapacity(slot.getSeat().getCapacity());
+			slotResponse.setDate(datetime.toLocalDate());
+			slotResponse.setTime(datetime.toLocalTime());
+			slotResponse.setStatus(slot.getStatus().name());
+			return slotResponse;
+		}).toList();
+		return new ResponseEntity<>(Map.of("slots", SlotResponses, "slotsPerPage", slotsPage.getNumberOfElements(),
+				"currentPage", slotsPage.getNumber(), "totalPage", slotsPage.getTotalPages(), "totalSlots",
+				slotsPage.getTotalElements()), HttpStatus.OK);
 	}
-	
-	@PreAuthorize("hasRole('ADMIN')") 
+
+	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/reservations")
 	public ResponseEntity<Object> getAllReservations(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
 		Page<GuestReservation> reservationsPage = guestReservationService.getAllReservation(page, size);
 		if (reservationsPage.isEmpty()) {
 			return new ResponseEntity<>(Map.of("Error", "No Reservations found"), HttpStatus.NOT_FOUND);
-		}		
-		List<ReservationDTO> reservationResponses = reservationsPage.getContent().stream().map(
-				reservation -> {
-					LocalDateTime datetime = timeZoneConverter.convertToLocalTime(reservation.getSlot().getSchedule().getDatetime(), "Australia/Sydney");
-					ReservationDTO reservationResponse = new ReservationDTO();
-					reservationResponse.setId(reservation.getId());
-					reservationResponse.setTableName(reservation.getSlot().getSeat().getSeatName());
-					reservationResponse.setCapacity(reservation.getSlot().getSeat().getCapacity());
-					reservationResponse.setDate(datetime.toLocalDate());
-					reservationResponse.setTime(datetime.toLocalTime());
-					reservationResponse.setStatus(reservation.getStatus().name());					
-					return reservationResponse;
-				}).toList(); 
-		return new ResponseEntity<>(Map.of(
-				"reservations", reservationResponses,
-				"reservationsPerPage", reservationsPage.getNumberOfElements(),
-				"currentPage", reservationsPage.getNumber(),
-				"totalPage", reservationsPage.getTotalPages(),
-				"totalReservations", reservationsPage.getTotalElements()
-				), HttpStatus.OK);
+		}
+		List<ReservationDTO> reservationResponses = reservationsPage.getContent().stream().map(reservation -> {
+			LocalDateTime datetime = timeZoneConverter
+					.convertToLocalTime(reservation.getSlot().getSchedule().getDatetime(), "Australia/Sydney");
+			ReservationDTO reservationResponse = new ReservationDTO();
+			reservationResponse.setId(reservation.getId());
+			reservationResponse.setTableName(reservation.getSlot().getSeat().getSeatName());
+			reservationResponse.setCapacity(reservation.getSlot().getSeat().getCapacity());
+			reservationResponse.setDate(datetime.toLocalDate());
+			reservationResponse.setTime(datetime.toLocalTime());
+			reservationResponse.setStatus(reservation.getStatus().name());
+			return reservationResponse;
+		}).toList();
+		return new ResponseEntity<>(Map.of("reservations", reservationResponses, "reservationsPerPage",
+				reservationsPage.getNumberOfElements(), "currentPage", reservationsPage.getNumber(), "totalPage",
+				reservationsPage.getTotalPages(), "totalReservations", reservationsPage.getTotalElements()),
+				HttpStatus.OK);
 	}
-	
-	@PreAuthorize("hasRole('ADMIN')") 
+
+	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping("/reservations/edit/{id}/{status}")
 	public ResponseEntity<Object> editReservationStatus(@PathVariable Long id, @PathVariable String status) {
-		
+
 		if (!guestReservationService.isStatusValid(status)) {
 			return new ResponseEntity<>(Map.of("error", "Invalid status provided."), HttpStatus.BAD_REQUEST);
 		}
 		GuestReservation reservation = guestReservationService.findReservationById(id);
 		GuestReservation.Status updatedStatus = GuestReservation.Status.valueOf(status.toUpperCase());
 		reservation.setStatus(updatedStatus);
-		guestReservationService.updateReservationStatus(reservation);			
-		
+		guestReservationService.updateReservationStatus(reservation);
+
 		return new ResponseEntity<>(Map.of("message", "Successfully " + updatedStatus + " the booking"), HttpStatus.OK);
 	}
 }
