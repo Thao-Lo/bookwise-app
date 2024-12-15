@@ -23,6 +23,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 	
 	@Transactional
 	@Modifying 
-	@Query("DELETE FROM Schedule s WHERE s.datetime < :currentDateTime")	
+	@Query("DELETE FROM Schedule s WHERE s.datetime < :currentDateTime AND NOT EXISTS (SELECT 1 FROM Slot sl WHERE sl.schedule = s)")	
 	void deleteByDatetimeBefore(@Param("currentDateTime") LocalDateTime currentDatetime);
 }

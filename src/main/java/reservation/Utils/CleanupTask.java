@@ -41,9 +41,9 @@ public class CleanupTask {
 //		LocalDateTime nowUtc = timeZoneConverter.convertToUTC(LocalDateTime.now(), "Australia/Sydney").withNano(0);
 		LocalDateTime nowUtc = LocalDateTime.now().withNano(0);
 
-		System.out.println("current UTC" + nowUtc);
-		scheduleRepository.deleteByDatetimeBefore(nowUtc);
+		System.out.println("current UTC" + nowUtc);		
 		slotRepository.deleteByScheduleDatetimeBefore(nowUtc);
+		scheduleRepository.deleteByDatetimeBefore(nowUtc);
 	    System.out.println("DEBUG: Cleanup query executed for datetime: " + nowUtc);
 	}
 }

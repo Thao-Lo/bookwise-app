@@ -1,5 +1,6 @@
 package reservation.Controller;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,9 +22,12 @@ import reservation.DTO.ReservationDTO;
 import reservation.DTO.ScheduleResponse;
 import reservation.DTO.SlotResponse;
 import reservation.Entity.GuestReservation;
+import reservation.Entity.GuestReservation.Status;
 import reservation.Entity.Schedule;
 import reservation.Entity.Seat;
 import reservation.Entity.Slot;
+import reservation.Entity.User;
+import reservation.Entity.User.Role;
 import reservation.Service.GuestReservationService;
 import reservation.Service.ScheduleService;
 import reservation.Service.SeatService;
@@ -144,5 +150,20 @@ public class AdminManagementController {
 				"totalPage", reservationsPage.getTotalPages(),
 				"totalReservations", reservationsPage.getTotalElements()
 				), HttpStatus.OK);
+	}
+	
+	@PreAuthorize("hasRole('ADMIN')") 
+	@PostMapping("/reservations/edit/{id}/{status}")
+	public ResponseEntity<Object> editReservationStatus(@PathVariable Long id, @PathVariable String status) {
+		
+		if (!guestReservationService.isStatusValid(status)) {
+			return new ResponseEntity<>(Map.of("error", "Invalid status provided."), HttpStatus.BAD_REQUEST);
+		}
+		GuestReservation reservation = guestReservationService.findReservationById(id);
+		GuestReservation.Status updatedStatus = GuestReservation.Status.valueOf(status.toUpperCase());
+		reservation.setStatus(updatedStatus);
+		guestReservationService.updateReservationStatus(reservation);			
+		
+		return new ResponseEntity<>(Map.of("message", "Successfully " + updatedStatus + " the booking"), HttpStatus.OK);
 	}
 }

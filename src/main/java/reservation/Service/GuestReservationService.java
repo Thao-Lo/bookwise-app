@@ -33,11 +33,12 @@ public class GuestReservationService {
 
 	@Autowired
 	private RedissonClient redissonClient;
-	
-	public Page<GuestReservation> getAllReservation(int page, int size){
+
+	public Page<GuestReservation> getAllReservation(int page, int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		return guestReservationRepository.findAll(pageable);
 	}
+
 	public boolean isSlotReserve(String slotKey) {
 		String lockKey = "lock:" + slotKey;
 		RLock lock = redissonClient.getLock(lockKey);
@@ -71,20 +72,21 @@ public class GuestReservationService {
 	@Transactional // modify multiple entries slot and reservation
 	public void saveNewReservation(String username, Long slotId, Integer capacity) {
 		if (username == null) {
-		    throw new IllegalArgumentException("Username cannot be null");
+			throw new IllegalArgumentException("Username cannot be null");
 		}
 		if (slotId == null) {
-		    throw new IllegalArgumentException("Slot ID cannot be null");
+			throw new IllegalArgumentException("Slot ID cannot be null");
 		}
 		if (capacity == null) {
-		    throw new IllegalArgumentException("Capacity cannot be null");
+			throw new IllegalArgumentException("Capacity cannot be null");
 		}
 		User user = userRepository.findByUsername(username);
 		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
-		if(slot.getStatus() == Status.UNAVAILABLE){
-			 throw new IllegalArgumentException("Slot is no longer available");
+		if (slot.getStatus() == Status.UNAVAILABLE) {
+			throw new IllegalArgumentException("Slot is no longer available");
 		}
-		//ALTER TABLE guest_reservation ADD CONSTRAINT unique_user_slot UNIQUE (user_id, slot_id);
+		// ALTER TABLE guest_reservation ADD CONSTRAINT unique_user_slot UNIQUE
+		// (user_id, slot_id);
 
 		GuestReservation reservation = new GuestReservation();
 		reservation.setUser(user);
@@ -92,9 +94,38 @@ public class GuestReservationService {
 		reservation.setNumberOfGuests(capacity);
 		reservation.setStatus(GuestReservation.Status.BOOKED);
 		guestReservationRepository.save(reservation);
-		
+
 		slot.setStatus(Status.UNAVAILABLE);
-		slotRepository.save(slot);		
-		
+		slotRepository.save(slot);
+
+	}
+
+	public GuestReservation findReservationById(Long id) {
+		return guestReservationRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+	}
+
+	public boolean isStatusValid(String status) {
+		for (GuestReservation.Status s : GuestReservation.Status.values()) {
+			if (s.name().equalsIgnoreCase(status)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Transactional
+	public void updateReservationStatus(GuestReservation reservation) {
+		guestReservationRepository.save(reservation);
+		Slot slot = slotRepository.findById(reservation.getSlot().getId())
+				.orElseThrow(() -> new IllegalArgumentException("Slot not found for reservation ID: " + reservation.getId()));
+		;
+		if (reservation.getStatus() == GuestReservation.Status.CANCELLED) {			
+			slot.setStatus(Status.AVAILABLE);
+			
+		}else if(reservation.getStatus() == GuestReservation.Status.BOOKED) {
+			slot.setStatus(Status.UNAVAILABLE);
+		}
+		slotRepository.save(slot);
 	}
 }
