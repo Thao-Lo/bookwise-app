@@ -25,4 +25,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 	@Modifying 
 	@Query("DELETE FROM Schedule s WHERE s.datetime < :currentDateTime AND NOT EXISTS (SELECT 1 FROM Slot sl WHERE sl.schedule = s)")	
 	void deleteByDatetimeBefore(@Param("currentDateTime") LocalDateTime currentDatetime);
+	
+	@Query("SELECT s FROM Schedule s WHERE s.datetime >= :currentDateTime")	
+	List<Schedule> getAllDatetimeAfterToday(@Param("currentDateTime") LocalDateTime currentDatetime);
+	
 }

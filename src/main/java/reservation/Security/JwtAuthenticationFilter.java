@@ -48,12 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					return;
 				}
 				// SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_ADMIN");
+				// @PreAuthorize("hasRole('ADMIN')")
 				List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
-				if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-					// @PreAuthorize("hasRole('ADMIN')")
+				if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {					
 					UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 							username, null, authorities);
+					//IP address of device, sessionId....
 					authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 					SecurityContextHolder.getContext().setAuthentication(authentication);
 

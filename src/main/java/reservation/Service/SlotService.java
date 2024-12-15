@@ -42,7 +42,8 @@ public class SlotService {
 	}
 
 	public void generateSlots() {
-		List<Schedule> schedules = scheduleRepository.findAll();
+		LocalDateTime datetime = LocalDateTime.now();
+		List<Schedule> schedules = scheduleRepository.getAllDatetimeAfterToday(datetime);
 		List<Seat> seats = seatRepository.findAll();
 		List<Slot> slots = new ArrayList<>();
 

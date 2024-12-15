@@ -26,6 +26,9 @@ public class ScheduleService {
 		Pageable pageable = PageRequest.of(page, size);
 		return scheduleRepository.findAll(pageable);
 	}
+	public List<Schedule> getAllDatetimeAfterToday(LocalDateTime currentDatetime){
+		return scheduleRepository.getAllDatetimeAfterToday(currentDatetime);
+	}
 	
 	public void insertScheduleForNext30Days() {
 		//today: date + time
