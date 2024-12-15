@@ -58,7 +58,7 @@ public class UserController {
 
 		emailService.sendVerificationEmail(request.getEmail(), verificationCode);
 
-		return new ResponseEntity<>("User Register successfully", HttpStatus.CREATED);
+		return new ResponseEntity<>("User Register successfully. Please check your email to verify your account.", HttpStatus.CREATED);
 	}
 
 	@PostMapping("/verify-email")

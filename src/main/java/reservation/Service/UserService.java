@@ -43,7 +43,9 @@ public class UserService {
 	public Boolean isEmailExist(String email) {
 		return userRepository.findByEmail(email) != null;			
 	}
-	
+	public Boolean isEmailVerified(Long id) {
+		return userRepository.findByIdAndEmailVerifiedTrue(id).isPresent();			
+	}
 	public User findUserByEmail(String email) {
 		return userRepository.findByEmail(email);
 	}

@@ -37,6 +37,10 @@ public class LoginController {
 		if (user == null) {
 			return new ResponseEntity<>(Map.of("error", "Invalid Username or Email."), HttpStatus.BAD_REQUEST);
 		}
+		if(!userService.isEmailVerified(user.getId())) {
+			return new ResponseEntity<>(Map.of("error", "Email not verified.Please Verified your email before login."), HttpStatus.BAD_REQUEST);
+		}	
+		
 		// compare raw password with hashed password in db -> matches
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 		if (!encoder.matches(request.getPassword(), user.getPassword())) {
