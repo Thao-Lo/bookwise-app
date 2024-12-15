@@ -101,8 +101,12 @@ public class GuestReservationService {
 	}
 
 	public GuestReservation findReservationById(Long id) {
-		return guestReservationRepository.findById(id)
-				.orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+		GuestReservation reservation = guestReservationRepository.findBySlotId(id);
+		if(reservation == null) {
+			throw new IllegalArgumentException("Reservation not found");
+		}
+		return reservation;
+				
 	}
 
 	public boolean isStatusValid(String status) {

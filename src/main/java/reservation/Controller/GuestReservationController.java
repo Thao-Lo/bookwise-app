@@ -92,9 +92,9 @@ public class GuestReservationController {
 			guestReservationService.saveNewReservation(principal.getName(), reservationDTO.getId(),
 					reservationDTO.getCapacity());
 			
-//			//send confirmation Email
-//			GuestReservation reservation = guestReservationService.findReservationById(reservationDTO.getId());
-//			emailService.sendBookingConfirmation(reservation);
+			//send confirmation Email
+			GuestReservation reservation = guestReservationService.findReservationById(reservationDTO.getId());
+			emailService.sendBookingConfirmation(reservation);
 		} finally {
 			redisService.deleteKey(sessionId);
 		}
