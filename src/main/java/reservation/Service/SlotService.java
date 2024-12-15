@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,10 +47,19 @@ public class SlotService {
 		List<Schedule> schedules = scheduleRepository.getAllDatetimeAfterToday(datetime);
 		List<Seat> seats = seatRepository.findAll();
 		List<Slot> slots = new ArrayList<>();
-
+		
+		//only get the existing slots in db
+		List<Slot> existingSlots = slotRepository.existingSlots(schedules, seats);
+		//from existing slot, create key for each slots and store in set
+		Set<String> existingSlotKeys = existingSlots.stream().map(
+				 slot -> slot.getSchedule().getId() + "_" + slot.getSeat().getId()
+				 ).collect(Collectors.toSet());
+				
+		
 		for (Schedule schedule : schedules) {
-			for (Seat seat : seats) {
-				if (!slotRepository.existsBySeatAndSchedule(seat, schedule)) {
+			for (Seat seat : seats) {				
+				String key = schedule.getId() + "_" + seat.getId(); //create compare key with key in SET O1
+				if (!existingSlotKeys.contains(key)) {
 					Slot slot = new Slot();
 					slot.setSeat(seat);
 					slot.setSchedule(schedule);
