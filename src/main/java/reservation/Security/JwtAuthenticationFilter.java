@@ -19,6 +19,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import reservation.Service.RedisService;
 import reservation.Utils.JwtUtil;
 
 @Component
@@ -26,7 +27,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //call 1 time per request
 	@Autowired
 	JwtUtil jwtUtil;
-
+	@Autowired
+	RedisService redisService;
 	@Override
 	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
@@ -36,8 +38,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			// Authorization: Bearer token
 			// token begins with index 7
 			String token = authHeader.substring(7);
-			try {
+			
+			//for logout try to login with old token
+			if(token != null && redisService.isTokenBlacklist(token)) {
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				response.getWriter().write("{\"error\": \"Token is blacklisted\"}");
+				return;
+			}				
+			try {				
 				Claims claims = jwtUtil.validateToken(token);
+				
 				String username = claims.getSubject();
 				// return string for claim role
 				// List<String> permissions = claims.get("permissions", List.class);

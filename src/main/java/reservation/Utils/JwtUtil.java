@@ -50,6 +50,17 @@ public class JwtUtil {
 		}
 				
 	}
+	//logout, take token then calculate remaining time from now to expired time
+	public Long getRemainingTokenTTL(String token) {
+		Date expiration = Jwts.parserBuilder()
+								.setSigningKey(SECRET_KEY)
+								.build()
+								.parseClaimsJws(token)
+								.getBody()
+								.getExpiration();
+		long now = System.currentTimeMillis();
+		return (expiration.getTime() - now)/1000; //calculate by sec
+	}
 }
 //key: email and cs50 
 //https://www.devglan.com/online-tools/hmac-sha256-online?ref=blog.tericcabrel.com

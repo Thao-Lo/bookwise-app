@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,6 +20,7 @@ import jakarta.validation.Valid;
 import reservation.DTO.LoginRequest;
 import reservation.DTO.UserResponse;
 import reservation.Entity.User;
+import reservation.Service.RedisService;
 import reservation.Service.UserService;
 import reservation.Utils.JwtUtil;
 
@@ -30,7 +32,8 @@ public class LoginController {
 	UserService userService;
 	@Autowired
 	JwtUtil jwtUtil;
-	
+	@Autowired
+	RedisService redisService;
 	@Autowired
 	PasswordEncoder passwordEncoder;
 	
@@ -66,10 +69,13 @@ public class LoginController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@PostMapping("/user/refresh-token")
+	@PostMapping("/refresh-token")
 	public ResponseEntity<Map<String, String>> refreshToken(@RequestBody Map<String, String> request) {
 		String refreshToken = request.get("refreshToken");
 		try {
+			if(redisService.isTokenBlacklist(refreshToken)) {
+				return new ResponseEntity<>(Map.of("error", "Refresh Token is invalid or blacklist"), HttpStatus.UNAUTHORIZED);
+			}
 			Claims claims = jwtUtil.validateToken(refreshToken); // will throw exception here
 			String username = claims.getSubject();
 			String role = claims.get("role", String.class);
@@ -83,5 +89,21 @@ public class LoginController {
 		} catch (JwtException e) {
 			return new ResponseEntity<>(Map.of("error", "Invalid Token"), HttpStatus.UNAUTHORIZED);
 		}
+	}
+	@PostMapping("/user/logout")
+	public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String authHeader ,@RequestBody Map<String, String> request){
+		System.out.println("authHeader" + authHeader);
+		String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+		
+		
+		String refreshToken = request.get("refreshToken");
+		
+		long refreshTokenTTL = jwtUtil.getRemainingTokenTTL(refreshToken);
+		long accessTokenTTL = jwtUtil.getRemainingTokenTTL(token);
+		
+		redisService.blacklistToken(token, accessTokenTTL);
+		redisService.blacklistToken(refreshToken, refreshTokenTTL);
+	
+		return new ResponseEntity<>(Map.of("message", "Logout successfully."), HttpStatus.OK);
 	}
 }

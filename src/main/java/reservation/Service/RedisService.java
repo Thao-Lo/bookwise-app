@@ -2,7 +2,6 @@ package reservation.Service;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -13,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import io.jsonwebtoken.Jwts;
 import reservation.DTO.ReservationDTO;
 
 @Service
@@ -71,7 +71,16 @@ public class RedisService {
 		reservationResult.put("status", bookingStatus);
 		return reservationResult;
 	}
-
+	//get paymentIntend Id for stripe
+	public String getPaymentIntentId(String sessionId) {
+		String key = "reservation:" + sessionId;
+		String id = (String) redisTemplate.opsForHash().get(key, "paymentIntentId");	
+		if (id == null) {
+			throw new IllegalArgumentException("Session data not found or expired.");
+		}
+		return id;
+	}
+	
 	public void setStatusToConfirming(String sessionId) {
 		String key = "reservation:" + sessionId;
 		String bookingStatus = (String) redisTemplate.opsForHash().get(key, "bookingStatus");
@@ -88,7 +97,17 @@ public class RedisService {
 		String key = "reservation:" + sessionId;
 		return redisTemplate.getExpire(key);
 	}
-
+	
+	//logout
+	//use opsForValue for <String, String> (key, value, duration)
+	public void blacklistToken(String token, long ttl) {
+	    redisTemplate.opsForValue().set("blacklist:" + token, "blacklisted", Duration.ofSeconds(ttl));
+	}
+	//logout
+	public boolean isTokenBlacklist(String token) {
+		return redisTemplate.hasKey("blacklist:" + token);
+	}
+	
 	public String dateFormatter(LocalDate localDate) {
 		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		return localDate.format(dateFormatter);
