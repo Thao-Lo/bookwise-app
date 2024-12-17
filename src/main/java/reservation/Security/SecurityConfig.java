@@ -20,10 +20,10 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable()) //disable CSRF 
 		//defining access control rules for different endpoints
 			.authorizeHttpRequests((requests) -> requests					
-					.requestMatchers("/api/v1/register","/api/v1/login", "/api/v1/verify-email",  "/api/v1/slots", "/api/v1/reservation/create").permitAll() //permit multiple paths
+//					.requestMatchers("/api/v1/register","/api/v1/login", "/api/v1/verify-email",  "/api/v1/slots", "/api/v1/reservation/create").permitAll() //permit multiple paths
 					.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 					.requestMatchers("/api/v1/user/**").hasRole("GUEST")
-					.anyRequest().authenticated() // all other endpoints require authentication	
+					.anyRequest().permitAll() // all other endpoints require authentication	
 					)
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

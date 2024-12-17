@@ -60,7 +60,10 @@ public class UserService {
 		return userRepository.findById(id)
 				.orElseThrow(() -> new IllegalArgumentException("User not found"));
 	}
-	
+	public User findUserByUsername(String username) {
+		return userRepository.findByUsername(username);
+		
+	}
 	public boolean isValidRole(String role) {
 		for(Role r : Role.values()) {
 			if(r.name().equalsIgnoreCase(role)) {

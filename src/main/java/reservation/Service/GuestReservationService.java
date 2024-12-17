@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import reservation.Entity.GuestReservation;
-import reservation.Entity.Schedule;
 import reservation.Entity.Slot;
 import reservation.Entity.Slot.Status;
 import reservation.Entity.User;
@@ -101,11 +100,9 @@ public class GuestReservationService {
 	}
 
 	public GuestReservation findReservationById(Long id) {
-		GuestReservation reservation = guestReservationRepository.findBySlotId(id);
-		if(reservation == null) {
-			throw new IllegalArgumentException("Reservation not found");
-		}
-		return reservation;
+		return guestReservationRepository.findBySlotId(id)
+				.orElseThrow(() -> new IllegalArgumentException("Reservation not found"));		
+		 
 				
 	}
 
