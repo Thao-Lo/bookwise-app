@@ -1,6 +1,7 @@
 package reservation.Controller;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,17 +35,17 @@ public class UserController {
 	
 
 	@PostMapping("/register")
-	public ResponseEntity<String> registerNewUser(@Valid @RequestBody RegisterRequest request) {
+	public ResponseEntity<Object> registerNewUser(@Valid @RequestBody RegisterRequest request) {
 
 		if (userService.isUsernameExist(request.getUsername())) {
-			return new ResponseEntity<>("Username is already existed.", HttpStatus.CONFLICT);
+			return new ResponseEntity<>(Map.of("error","Username is already existed."), HttpStatus.CONFLICT);
 		}
 		if (userService.isEmailExist(request.getEmail())) {
-			return new ResponseEntity<>("Email is already existed.", HttpStatus.CONFLICT);
+			return new ResponseEntity<>(Map.of("error","Email is already existed."), HttpStatus.CONFLICT);
 		}
 		// confirm re-enter password
 		if (!request.getPassword().equals(request.getConfirmPassword())) {
-			return new ResponseEntity<>("Passwords are not matched", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(Map.of("error","Passwords are not matched"), HttpStatus.BAD_REQUEST);
 		}
 		System.out.println("register password: " + request.getPassword());
 		System.out.println("Hashed password (register): " + passwordEncoder.encode(request.getPassword()));
@@ -64,27 +65,27 @@ public class UserController {
 
 		emailService.sendVerificationEmail(request.getEmail(), verificationCode);
 
-		return new ResponseEntity<>("User Register successfully. Please check your email to verify your account.", HttpStatus.CREATED);
+		return new ResponseEntity<>(Map.of("message","User Register successfully. Please check your email to verify your account."), HttpStatus.CREATED);
 	}
 
 	@PostMapping("/verify-email")
-	public ResponseEntity<String> verifyEmail(@RequestParam @NotEmpty @Email String email, @RequestParam @NotEmpty String code) {
+	public ResponseEntity<Object> verifyEmail(@RequestParam @NotEmpty @Email String email, @RequestParam @NotEmpty String code) {
 		User user = userService.findUserByEmail(email);
 
 		if (user == null) {
-			return new ResponseEntity<>("User is not found.", HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(Map.of("error","User is not found."), HttpStatus.NOT_FOUND);
 		}
 		if (!user.getVerificationCode().equals(code)) {
-			return new ResponseEntity<>("Invalid verification code.", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(Map.of("error","Invalid verification code."), HttpStatus.BAD_REQUEST);
 		}
 		if (user.getCodeExpirationTime() == null || user.getCodeExpirationTime().isBefore(LocalDateTime.now())) {
-			return new ResponseEntity<>("verification code expired", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(Map.of("error","verification code expired"), HttpStatus.BAD_REQUEST);
 		}
 		user.setEmailVerified(true);
 		user.setVerificationCode(null);
 		user.setCodeExpirationTime(null);
 		userService.saveUser(user);
-		return new ResponseEntity<>("Email verified successfully", HttpStatus.OK);
+		return new ResponseEntity<>(Map.of("message","Email verified successfully"), HttpStatus.OK);
 	}
 
 	@PostMapping("/resend-verification-code")

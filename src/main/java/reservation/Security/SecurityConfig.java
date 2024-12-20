@@ -5,13 +5,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 
 @Configuration
-public class SecurityConfig {
+@EnableWebSecurity
+public class SecurityConfig implements WebMvcConfigurer{
 	 @Autowired
 	    JwtAuthenticationFilter jwtAuthenticationFilter;
 	 
@@ -31,5 +35,14 @@ public class SecurityConfig {
 		
 		return http.build();
 		
+	}	
+	
+	public void addCorsMappings(CorsRegistry registry) {
+		// Allow cross-origin requests from localhost:3000
+		registry.addMapping("/**")
+				.allowedOrigins("http://localhost:3000/")
+				.allowedMethods("GET", "POST", "PUT", "DELETE")
+				.allowedHeaders("*")
+				.allowCredentials(true); // Allow credentials like cookies
 	}
 }

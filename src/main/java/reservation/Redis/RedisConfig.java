@@ -18,7 +18,7 @@ public class RedisConfig {
 		RedisTemplate<String, Object> template = new RedisTemplate<>();
 
 		// gắn RedisConnectionFactory vào RedisTemplate, để RedisTemplate biết cách kết
-		// nối với Redis server.
+		// nối app  port 8080 với Redis server port 6379.
 		template.setConnectionFactory(redisConnectionFactory);
 
 		// Chuyển đổi các khóa (key) trong Redis thành chuỗi (String).
