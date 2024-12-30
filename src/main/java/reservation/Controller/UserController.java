@@ -89,14 +89,14 @@ public class UserController {
 	}
 
 	@PostMapping("/resend-verification-code")
-	public ResponseEntity<String> resendVerificationCode(@RequestParam @NotEmpty @Email String email) {
+	public ResponseEntity<Object> resendVerificationCode(@RequestParam @NotEmpty @Email String email) {
 		User user = userService.findUserByEmail(email);
 
 		if (user == null) {
-			return new ResponseEntity<>("User is not found.", HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(Map.of("error","User is not found."), HttpStatus.NOT_FOUND);
 		}
 		if(user.isEmailVerified()) {
-			return new ResponseEntity<>("Email is already verified.", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(Map.of("error","Email is already verified."), HttpStatus.BAD_REQUEST);
 		}
 		String newCode = UUID.randomUUID().toString();
 
@@ -105,7 +105,7 @@ public class UserController {
 		
 		userService.saveUser(user);
 		emailService.sendVerificationEmail(user.getEmail(), newCode);
-		return new ResponseEntity<>("Verification code resent successfully.", HttpStatus.OK);
+		return new ResponseEntity<>(Map.of("message","Verification code resent successfully."), HttpStatus.OK);
 	}
 
 }
