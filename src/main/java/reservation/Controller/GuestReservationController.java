@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -62,7 +63,7 @@ public class GuestReservationController {
 				Map.of("message", "Reservation is on hold", "sessionId", sessionId, "remainingTime", TTL),
 				HttpStatus.OK);
 	}
-
+	@PreAuthorize("hasRole('GUEST')")
 	@GetMapping("/user/reservation/retrieve")
 	public ResponseEntity<Object> retrieveReservation(@RequestParam String sessionId, Principal principal) {
 		// accessToken
@@ -79,8 +80,10 @@ public class GuestReservationController {
 	}
 
 	// step 3
+	@PreAuthorize("hasRole('GUEST')")
 	@PostMapping("/user/reservation/create-payment")
 	public ResponseEntity<Object> createPayment(@RequestParam String sessionId, Principal principal) {
+		System.out.println("sessionId payment: " + sessionId);
 		String key = "reservation:" + sessionId;
 		if (principal == null) {
 			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
@@ -114,11 +117,10 @@ public class GuestReservationController {
 							.putMetadata("sessionId", sessionId)
 							.build());		
 			redisTemplate.opsForHash().put(key, "paymentIntentId", paymentIntent.getId());
-			System.out.println("paymentIntentId" + paymentIntent.getId());
+			System.out.println("paymentIntentId" + paymentIntent.getId());			
 			
-			return new ResponseEntity<>(Map.of(
-					"clientSecret", paymentIntent.getClientSecret(),
-					"message","Please complete your payment to confirm your booking.",
+			return new ResponseEntity<>(Map.of("clientSecret", paymentIntent.getClientSecret(),
+					"message","Please complete your payment to confirm your booking.",					
 					"paymentIntentId", paymentIntent.getId() ), HttpStatus.OK);
 		} catch (StripeException e) {
 			e.printStackTrace();
@@ -128,6 +130,7 @@ public class GuestReservationController {
 	}
 
 	// step 4
+	@PreAuthorize("hasRole('GUEST')")
 	@PostMapping("/user/reservation/confirm-reservation")
 	public ResponseEntity<Object> confirmReservation(@RequestParam String sessionId, Principal principal, @RequestParam String paymentIntentId) throws StripeException {
 		if (principal == null) {

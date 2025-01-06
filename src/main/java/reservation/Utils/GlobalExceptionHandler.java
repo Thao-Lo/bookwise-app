@@ -27,6 +27,11 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<Object> handleIllegalArgument(IllegalArgumentException ex){
 		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.BAD_REQUEST);
 	}
+	
+//	 @ExceptionHandler(UserNotFoundException.class)
+//	public ResponseEntity<Object> handleUserNotFound(UserNotFoundException ex){
+//		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.BAD_REQUEST);
+//	}
 	 
 //	@ExceptionHandler(Exception.class)
 //	public ResponseEntity<String> handleGenericException(Exception ex) {

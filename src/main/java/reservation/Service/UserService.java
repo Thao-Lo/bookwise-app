@@ -25,11 +25,12 @@ public class UserService {
 	UserRepository userRepository;
 	@Autowired
 	PasswordEncoder passwordEncoder;
-	
+
 	public List<User> showAllUsers() {
 		return userRepository.findAll();
 	}
-	public Page<User> showAllUsers(int page, int size){
+
+	public Page<User> showAllUsers(int page, int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		return userRepository.findAll(pageable);
 	}
@@ -41,37 +42,47 @@ public class UserService {
 
 	public Boolean isUsernameExist(String username) {
 		return userRepository.findByUsername(username) != null;
-			
+
 	}
+
 	public Boolean isEmailExist(String email) {
-		return userRepository.findByEmail(email) != null;			
+		return userRepository.findByEmail(email) != null;
 	}
+
 	public Boolean isEmailVerified(Long id) {
-		return userRepository.findByIdAndEmailVerifiedTrue(id).isPresent();			
+		return userRepository.findByIdAndEmailVerifiedTrue(id).isPresent();
 	}
+
 	public User findUserByEmail(String email) {
 		return userRepository.findByEmail(email);
 	}
+
+	public User findUserbyUsername(String username) {
+		return userRepository.findByUsername(username);		
+	}
+
 	public User findUserByUsernameOrEmail(String usernameorEmail) {
 		return userRepository.findByUsernameOrEmail(usernameorEmail, usernameorEmail);
 	}
-	
-	public User findUserById(Long id) {		
-		return userRepository.findById(id)
-				.orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+	public User findUserById(Long id) {
+		return userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
 	}
+
 	public User findUserByUsername(String username) {
 		return userRepository.findByUsername(username);
-		
+
 	}
+
 	public boolean isValidRole(String role) {
-		for(Role r : Role.values()) {
-			if(r.name().equalsIgnoreCase(role)) {
+		for (Role r : Role.values()) {
+			if (r.name().equalsIgnoreCase(role)) {
 				return true;
 			}
 		}
 		return false;
 	}
+
 //	public Boolean isValidEmailPattern(String email) {
 //		String emailPattern = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,63}$";
 //		Pattern pattern = Pattern.compile(emailPattern);
@@ -88,13 +99,16 @@ public class UserService {
 //		BCryptPasswordEncoder encoder =  new BCryptPasswordEncoder();
 		return passwordEncoder.encode(password);
 	}
-	public User saveUser(User user) {			
+
+	public User saveUser(User user) {
 		return userRepository.save(user);
 	}
+
 	@Transactional
 	public User updateUserRole(User user) {
 		return userRepository.save(user);
 	}
+
 	public String generateVerificationCode() {
 		return UUID.randomUUID().toString();
 	}

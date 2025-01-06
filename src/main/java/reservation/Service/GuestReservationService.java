@@ -38,6 +38,11 @@ public class GuestReservationService {
 		return guestReservationRepository.findAll(pageable);
 	}
 
+	public Page<GuestReservation> getReservationByUserId(int page, int size, String userId) {
+		Pageable pageable = PageRequest.of(page, size);
+		return guestReservationRepository.findByUserId(pageable, userId);
+	}
+
 	public boolean isSlotReserve(String slotKey) {
 		String lockKey = "lock:" + slotKey;
 		RLock lock = redissonClient.getLock(lockKey);
@@ -101,9 +106,8 @@ public class GuestReservationService {
 
 	public GuestReservation findReservationById(Long id) {
 		return guestReservationRepository.findBySlotId(id)
-				.orElseThrow(() -> new IllegalArgumentException("Reservation not found"));		
-		 
-				
+				.orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+
 	}
 
 	public boolean isStatusValid(String status) {
@@ -118,15 +122,16 @@ public class GuestReservationService {
 	@Transactional
 	public void updateReservationStatus(GuestReservation reservation) {
 		guestReservationRepository.save(reservation);
-		Slot slot = slotRepository.findById(reservation.getSlot().getId())
-				.orElseThrow(() -> new IllegalArgumentException("Slot not found for reservation ID: " + reservation.getId()));
+		Slot slot = slotRepository.findById(reservation.getSlot().getId()).orElseThrow(
+				() -> new IllegalArgumentException("Slot not found for reservation ID: " + reservation.getId()));
 		;
-		if (reservation.getStatus() == GuestReservation.Status.CANCELLED) {			
+		if (reservation.getStatus() == GuestReservation.Status.CANCELLED) {
 			slot.setStatus(Status.AVAILABLE);
-			
-		}else if(reservation.getStatus() == GuestReservation.Status.BOOKED) {
+
+		} else if (reservation.getStatus() == GuestReservation.Status.BOOKED) {
 			slot.setStatus(Status.UNAVAILABLE);
 		}
 		slotRepository.save(slot);
 	}
+
 }
