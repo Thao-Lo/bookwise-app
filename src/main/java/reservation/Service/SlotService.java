@@ -78,7 +78,9 @@ public class SlotService {
 	public List<Slot> getSlotsbySeatCapacity(int capacity) {
 		return slotRepository.getSlotsBySeatCapacity(capacity);
 	}
-
+	
+	
+	
 	public List<Slot> getSlots(Integer capacity, LocalDate date, LocalTime time) {
 
 		int[] capacities = { 2, 4, 6 };

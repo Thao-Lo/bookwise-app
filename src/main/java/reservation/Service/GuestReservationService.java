@@ -38,7 +38,7 @@ public class GuestReservationService {
 		return guestReservationRepository.findAll(pageable);
 	}
 
-	public Page<GuestReservation> getReservationByUserId(int page, int size, String userId) {
+	public Page<GuestReservation> getReservationByUserId(int page, int size, Long userId) {
 		Pageable pageable = PageRequest.of(page, size);
 		return guestReservationRepository.findByUserId(pageable, userId);
 	}
@@ -66,6 +66,16 @@ public class GuestReservationService {
 			if (lock.isHeldByCurrentThread()) {
 				lock.unlock();
 			}
+		}
+	}
+	
+	public void markSlotUnavailable(Long slotId) {
+		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
+		if(slot != null && slot.getStatus() == Slot.Status.AVAILABLE) {
+			slot.setStatus(Slot.Status.UNAVAILABLE);
+			slotRepository.save(slot);
+		}else {
+			throw new IllegalArgumentException("Slot is not available for booking");
 		}
 	}
 

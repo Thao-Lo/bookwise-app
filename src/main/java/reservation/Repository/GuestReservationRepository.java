@@ -18,7 +18,7 @@ public interface GuestReservationRepository extends JpaRepository<GuestReservati
 	@Query("SELECT r FROM GuestReservation r WHERE r.slot.id = :slotId")
 	Optional<GuestReservation> findBySlotId(@Param("slotId") Long slotId);
 
-	Page<GuestReservation> findByUserId (Pageable pageable, String userId);
+	Page<GuestReservation> findByUserId (Pageable pageable, Long userId);
 	
 }
 	

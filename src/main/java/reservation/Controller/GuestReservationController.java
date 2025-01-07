@@ -1,9 +1,14 @@
 package reservation.Controller;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +31,7 @@ import reservation.Service.EmailService;
 import reservation.Service.GuestReservationService;
 import reservation.Service.RedisService;
 import reservation.Service.UserService;
+import reservation.Utils.TimeZoneConverter;
 
 @RestController
 @RequestMapping("/api/v1/")
@@ -40,7 +46,9 @@ public class GuestReservationController {
 	UserService userService;
 	@Autowired
 	private RedisTemplate<String, Object> redisTemplate;
-	
+	@Autowired
+	TimeZoneConverter timeZoneConverter;
+
 	final int PRICE_PER_CAPACITY = 50;
 
 	private static final long TTL = 300; // Time to live 5 mins
@@ -55,14 +63,17 @@ public class GuestReservationController {
 			return new ResponseEntity<>(Map.of("message", "Slot is already being held by another user."),
 					HttpStatus.CONFLICT);
 		}
-
-		String sessionId = redisService.saveReservation(reservationDTO);
-
+		//Mark slot from AVAILABLE to UNAVAILABLE in Db
+		guestReservationService.markSlotUnavailable(reservationDTO.getId());
+		
+		String sessionId = redisService.saveReservation(reservationDTO);		
+		
 		System.out.println("reservation DTO" + reservationDTO);
 		return new ResponseEntity<>(
 				Map.of("message", "Reservation is on hold", "sessionId", sessionId, "remainingTime", TTL),
 				HttpStatus.OK);
 	}
+
 	@PreAuthorize("hasRole('GUEST')")
 	@GetMapping("/user/reservation/retrieve")
 	public ResponseEntity<Object> retrieveReservation(@RequestParam String sessionId, Principal principal) {
@@ -88,7 +99,7 @@ public class GuestReservationController {
 		if (principal == null) {
 			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
 					HttpStatus.UNAUTHORIZED);
-		}		
+		}
 		// to get email
 		User user = userService.findUserByUsername(principal.getName());
 		// get data from redis
@@ -106,22 +117,16 @@ public class GuestReservationController {
 			if (!isSlotAvailable) {
 				return new ResponseEntity<>(Map.of("error", "Slot is no longer available"), HttpStatus.NOT_FOUND);
 			}
-			
+
 			long amount = (long) reservationDTO.getCapacity() * PRICE_PER_CAPACITY * 100; // convert to cents
-			PaymentIntent paymentIntent = PaymentIntent
-					.create(PaymentIntentCreateParams
-							.builder()
-							.setAmount(amount)
-							.setCurrency("aud")
-							.setReceiptEmail(user.getEmail())
-							.putMetadata("sessionId", sessionId)
-							.build());		
+			PaymentIntent paymentIntent = PaymentIntent.create(PaymentIntentCreateParams.builder().setAmount(amount)
+					.setCurrency("aud").setReceiptEmail(user.getEmail()).putMetadata("sessionId", sessionId).build());
 			redisTemplate.opsForHash().put(key, "paymentIntentId", paymentIntent.getId());
-			System.out.println("paymentIntentId" + paymentIntent.getId());			
-			
-			return new ResponseEntity<>(Map.of("clientSecret", paymentIntent.getClientSecret(),
-					"message","Please complete your payment to confirm your booking.",					
-					"paymentIntentId", paymentIntent.getId() ), HttpStatus.OK);
+			System.out.println("paymentIntentId" + paymentIntent.getId());
+
+			return new ResponseEntity<>(Map.of("clientSecret", paymentIntent.getClientSecret(), "message",
+					"Please complete your payment to confirm your booking.", "paymentIntentId", paymentIntent.getId()),
+					HttpStatus.OK);
 		} catch (StripeException e) {
 			e.printStackTrace();
 			return new ResponseEntity<>(Map.of("error", "Payment processing failed", "details", e.getMessage()),
@@ -132,7 +137,8 @@ public class GuestReservationController {
 	// step 4
 	@PreAuthorize("hasRole('GUEST')")
 	@PostMapping("/user/reservation/confirm-reservation")
-	public ResponseEntity<Object> confirmReservation(@RequestParam String sessionId, Principal principal, @RequestParam String paymentIntentId) throws StripeException {
+	public ResponseEntity<Object> confirmReservation(@RequestParam String sessionId, Principal principal,
+			@RequestParam String paymentIntentId) throws StripeException {
 		if (principal == null) {
 			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
 					HttpStatus.UNAUTHORIZED);
@@ -142,12 +148,12 @@ public class GuestReservationController {
 		if (reservationData == null || !reservationData.containsKey("reservation")) {
 			return new ResponseEntity<>(Map.of("error", "Session not found or expired"), HttpStatus.BAD_REQUEST);
 		}
-		
+
 		String storedPaymentIntentId = redisService.getPaymentIntentId(sessionId);
-		if(!storedPaymentIntentId.equals(paymentIntentId)) {
+		if (!storedPaymentIntentId.equals(paymentIntentId)) {
 			return new ResponseEntity<>(Map.of("error", "Invalid payment information."), HttpStatus.BAD_REQUEST);
-		}		
-		
+		}
+
 		try {
 			ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
 
@@ -157,14 +163,14 @@ public class GuestReservationController {
 				return new ResponseEntity<>(Map.of("error", "Slot is no longer available"), HttpStatus.NOT_FOUND);
 			}
 			PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
-			
-			if(!"succeeded".equals(paymentIntent.getStatus())) {
+
+			if (!"succeeded".equals(paymentIntent.getStatus())) {
 				return new ResponseEntity<>(Map.of("error", "Payment not completed. Please try again."),
-	                    HttpStatus.BAD_REQUEST);
+						HttpStatus.BAD_REQUEST);
 			}
 			guestReservationService.saveNewReservation(principal.getName(), reservationDTO.getId(),
 					reservationDTO.getCapacity());
-			
+
 			// change status from HOLDING to CONFIRMING
 			redisService.setStatusToConfirming(sessionId);
 
@@ -178,9 +184,39 @@ public class GuestReservationController {
 					HttpStatus.OK);
 		} catch (Exception e) {
 			e.printStackTrace();
-			return new ResponseEntity<>(Map.of("error", "An error occurred while confirming your reservation","details", e.getMessage()),
+			return new ResponseEntity<>(
+					Map.of("error", "An error occurred while confirming your reservation", "details", e.getMessage()),
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	@PreAuthorize("hasRole('GUEST')")
+	@GetMapping("/user/reservation-list")
+	ResponseEntity<Object> getUserReservation(@RequestParam(required = true) Long userId,
+			@RequestParam(required = false, defaultValue = "0") Integer page,
+			@RequestParam(required = false, defaultValue = "5") Integer size) {
+		if (page == null || page < 0) {
+			page = 0;
+		}
+		if (size == null || size < 1) {
+			size = 5;
+		}
+		Page<GuestReservation> reservations = guestReservationService.getReservationByUserId(page, size, userId);
+		System.out.println(reservations.getTotalElements());
+		System.out.println(reservations.getTotalPages());
+		
+		if (reservations == null || reservations.isEmpty()) {
+			return new ResponseEntity<>(Map.of("error", "You have no reservation yet"), HttpStatus.BAD_REQUEST);
+		}
+		List<ReservationDTO> reservationDTOs = reservations.stream().map(reservation -> {
+			LocalDateTime localDatetime = timeZoneConverter
+					.convertToLocalTime(reservation.getSlot().getSchedule().getDatetime(), "Australia/Sydney");
+			return new ReservationDTO(reservation.getId(), reservation.getSlot().getSeat().getSeatName(),
+					reservation.getNumberOfGuests(), localDatetime.toLocalDate(), localDatetime.toLocalTime(),
+					reservation.getStatus().name());
+		}).collect(Collectors.toList());
+		return new ResponseEntity<>(Map.of("reservationList", reservationDTOs
+				,"totalRows", reservations.getTotalElements(), "totalPages",  reservations.getTotalPages() ), HttpStatus.OK);
 	}
 
 //	@PostMapping("/user/reservation/confirm")
