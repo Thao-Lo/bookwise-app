@@ -25,7 +25,12 @@ public class RedisService {
 		// create unique number
 		String sessionId = UUID.randomUUID().toString();
 		// "reservation: 945f9351-e32b-495e-bcfa-4d59056d7470"
+		//Primary key
 		String key = "reservation:" + sessionId;
+		
+		//Backup key
+		String backupKey = "reservation:" + sessionId + ":" + reservationDTO.getId();
+				
 		// "reservation: 945f9351-e32b-495e-bcfa-4d59056d7470" slotId "178"
 		redisTemplate.opsForHash().put(key, "id", String.valueOf(reservationDTO.getId()));
 		redisTemplate.opsForHash().put(key, "tableName", reservationDTO.getTableName());
@@ -37,6 +42,10 @@ public class RedisService {
 		redisTemplate.expire(key, Duration.ofSeconds(TTL));
 		System.out.println(
 				"reservation:" + sessionId + " " + reservationDTO.getId() + " " + reservationDTO.getTableName());
+		//Save backup data to Redis, slotId only
+		redisTemplate.opsForValue().set(backupKey, String.valueOf(reservationDTO.getId()));
+		redisTemplate.expire(backupKey, Duration.ofSeconds(TTL + 1));
+		
 		return sessionId;
 	}
 

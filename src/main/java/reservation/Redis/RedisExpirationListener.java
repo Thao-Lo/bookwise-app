@@ -2,6 +2,7 @@ package reservation.Redis;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
@@ -13,17 +14,31 @@ import reservation.Repository.SlotRepository;
 public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 	@Autowired
 	private SlotRepository slotRepository;
+	@Autowired
+	private RedisTemplate<String, Object> redisTemplate;
 
 	public RedisExpirationListener(RedisMessageListenerContainer listenerContainer) {
 		super(listenerContainer);
 		// TODO Auto-generated constructor stub
 	}
+
 	@Override
 	public void onMessage(Message message, byte[] pattern) {
-		String expiredKey = message.toString();
+		String expiredKey = new String(message.getBody());
 
-		if (expiredKey.startsWith("reservation:")) {
-			Long slotId = extractSlotIdFromKey(expiredKey);
+		System.out.println("expired message: " + message);
+		System.out.println("expiredKey" + expiredKey);
+
+		if (expiredKey.startsWith("reservation:") && expiredKey.split(":").length == 3) {
+			String[] keyItems = expiredKey.split(":");
+			String slotIdString = keyItems[2];
+			
+			System.out.println("slotIdString" + slotIdString);
+			
+			if (slotIdString == null) {
+				return;
+			}
+			Long slotId = Long.parseLong(slotIdString);
 
 			Slot slot = slotRepository.findById(slotId).orElse(null);
 			if (slot != null && slot.getStatus() == Slot.Status.UNAVAILABLE) {
@@ -33,8 +48,8 @@ public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 		}
 	}
 
-	
 	private Long extractSlotIdFromKey(String key) {
+		System.out.println("expired key" + key);
 		return Long.parseLong(key.split(":")[1]);
 	}
 
