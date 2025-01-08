@@ -56,7 +56,7 @@ public class Slot {
 	private LocalDateTime updatedAt;
 
 	public enum Status {
-		AVAILABLE, UNAVAILABLE
+		AVAILABLE, HOLDING, UNAVAILABLE
 	}
 
 }
