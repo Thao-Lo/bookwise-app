@@ -41,7 +41,24 @@ public class SlotService {
 		Pageable pageable = PageRequest.of(page, size);
 		return slotRepository.findAll(pageable);
 	}
-
+	
+	public void markSlotHoldingToAvailable(Long slotId) {
+		Slot slot = slotRepository.findById(slotId).orElse(null);
+		if (slot != null && slot.getStatus() == Slot.Status.HOLDING) {
+			slot.setStatus(Slot.Status.AVAILABLE);
+			slotRepository.save(slot);
+		}
+	}
+	public void markSlotHolding(Long slotId) {
+		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
+		if (slot != null && slot.getStatus() == Slot.Status.AVAILABLE) {
+			slot.setStatus(Slot.Status.HOLDING);
+			slotRepository.save(slot);
+		} else {
+			throw new IllegalArgumentException("Slot is not available for booking");
+		}
+	}
+	
 	public void generateSlots() {
 		LocalDateTime datetime = LocalDateTime.now();
 		List<Schedule> schedules = scheduleRepository.getAllDatetimeAfterToday(datetime);

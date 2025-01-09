@@ -101,6 +101,7 @@ public class RedisService {
 		String key = "reservation:" + sessionId;
 		redisTemplate.delete(key);
 	}
+		
 	public Long getRemainingTTL(String sessionId) {
 		String key = "reservation:" + sessionId;
 		return redisTemplate.getExpire(key);
@@ -125,4 +126,29 @@ public class RedisService {
 		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 		return localTime.format(timeFormatter);
 	}
+//	public boolean deleteSlotKey(String slotId) {
+//	    // Key dành cho RLock
+//	    String lockKey = "lock:slot:" + slotId;
+//
+//	    // Key dành cho RBucket
+//	    String reservationKey = "reservation:slot:" + slotId;
+//
+//	    // Xử lý RLock
+//	    RLock lock = redissonClient.getLock(lockKey);
+//	    if (lock.isLocked() && lock.isHeldByCurrentThread()) {
+//	        lock.unlock();
+//	    }
+//
+//	    // Xử lý RBucket
+//	    RBucket<Object> redisKey = redissonClient.getBucket(reservationKey);
+//	    if (redisKey.isExists()) {
+//	        redisKey.delete();
+//	        System.out.println("Deleted Redis key: " + reservationKey);
+//	        return true;
+//	    } else {
+//	        System.out.println("Redis key does not exist: " + reservationKey);
+//	        return false;
+//	    }
+//	}
+
 }

@@ -68,16 +68,14 @@ public class GuestReservationService {
 			}
 		}
 	}
-	
-	public void markSlotUnavailable(Long slotId) {
-		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
-		if(slot != null && slot.getStatus() == Slot.Status.AVAILABLE) {
-			slot.setStatus(Slot.Status.UNAVAILABLE);
-			slotRepository.save(slot);
-		}else {
-			throw new IllegalArgumentException("Slot is not available for booking");
+
+	public void releaseRedissonLock(Long slotId) {
+		String lockKey = "lock:" + "slot:" + slotId;
+		RLock lock = redissonClient.getLock(lockKey);
+		if (lock.isLocked() && lock.isHeldByCurrentThread()) {
+			lock.unlock();
 		}
-	}
+	}	
 
 	public boolean isSlotAvailable(Long slotId) {
 		return slotRepository.isSlotAvailable(slotId);

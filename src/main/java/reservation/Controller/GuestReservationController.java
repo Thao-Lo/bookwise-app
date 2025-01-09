@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,6 +31,7 @@ import reservation.Entity.User;
 import reservation.Service.EmailService;
 import reservation.Service.GuestReservationService;
 import reservation.Service.RedisService;
+import reservation.Service.SlotService;
 import reservation.Service.UserService;
 import reservation.Utils.TimeZoneConverter;
 
@@ -48,6 +50,8 @@ public class GuestReservationController {
 	private RedisTemplate<String, Object> redisTemplate;
 	@Autowired
 	TimeZoneConverter timeZoneConverter;
+	@Autowired
+	private SlotService slotService; 
 
 	final int PRICE_PER_CAPACITY = 50;
 
@@ -63,11 +67,11 @@ public class GuestReservationController {
 			return new ResponseEntity<>(Map.of("message", "Slot is already being held by another user."),
 					HttpStatus.CONFLICT);
 		}
-		//Mark slot from AVAILABLE to UNAVAILABLE in Db
-		guestReservationService.markSlotUnavailable(reservationDTO.getId());
-		
-		String sessionId = redisService.saveReservation(reservationDTO);		
-		
+		// Mark slot from AVAILABLE to HOLDING in Db
+		slotService.markSlotHolding(reservationDTO.getId());
+
+		String sessionId = redisService.saveReservation(reservationDTO);
+
 		System.out.println("reservation DTO" + reservationDTO);
 		return new ResponseEntity<>(
 				Map.of("message", "Reservation is on hold", "sessionId", sessionId, "remainingTime", TTL),
@@ -204,7 +208,7 @@ public class GuestReservationController {
 		Page<GuestReservation> reservations = guestReservationService.getReservationByUserId(page, size, userId);
 		System.out.println(reservations.getTotalElements());
 		System.out.println(reservations.getTotalPages());
-		
+
 		if (reservations == null || reservations.isEmpty()) {
 			return new ResponseEntity<>(Map.of("error", "You have no reservation yet"), HttpStatus.BAD_REQUEST);
 		}
@@ -215,8 +219,37 @@ public class GuestReservationController {
 					reservation.getNumberOfGuests(), localDatetime.toLocalDate(), localDatetime.toLocalTime(),
 					reservation.getStatus().name());
 		}).collect(Collectors.toList());
-		return new ResponseEntity<>(Map.of("reservationList", reservationDTOs
-				,"totalRows", reservations.getTotalElements(), "totalPages",  reservations.getTotalPages() ), HttpStatus.OK);
+		return new ResponseEntity<>(Map.of("reservationList", reservationDTOs, "totalRows",
+				reservations.getTotalElements(), "totalPages", reservations.getTotalPages()), HttpStatus.OK);
+	}
+
+	@DeleteMapping("/reservation/delete-redis-key")
+	ResponseEntity<Object> getUserReservation(@RequestParam(required = true) String sessionId) {
+		String existingKey = "reservation:" + sessionId;
+
+		// by default, field key is object
+		Map<Object, Object> rawData = redisTemplate.opsForHash().entries(existingKey);
+		
+		if(rawData == null || rawData.isEmpty()) {
+			return new ResponseEntity<>(Map.of("error","SessionId is expired or no longer exist"), HttpStatus.NOT_FOUND);
+		}
+		// casting to match the template String, Object
+		Map<String, Object> reservationData = rawData.entrySet().stream()
+				.collect(Collectors.toMap(entry -> (String) entry.getKey(), Map.Entry::getValue));
+		
+		Long slotId = Long.parseLong((String) reservationData.get("id"));
+		
+		String existingBackupKey = "reservation" + sessionId + ":" + slotId;
+		try {
+			redisService.deleteKey(sessionId);
+			redisTemplate.delete(existingBackupKey);
+			guestReservationService.releaseRedissonLock(slotId);
+			slotService.markSlotHoldingToAvailable(slotId);	
+		}catch(Exception e) {
+			return new ResponseEntity<>(Map.of("error","Failed to perform Redis clean up", "details", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return new ResponseEntity<>(Map.of("message", "Delete Redis key and release Redisson lock successfully."), HttpStatus.OK);
 	}
 
 //	@PostMapping("/user/reservation/confirm")

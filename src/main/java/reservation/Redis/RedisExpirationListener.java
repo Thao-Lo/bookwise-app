@@ -9,13 +9,15 @@ import org.springframework.stereotype.Component;
 
 import reservation.Entity.Slot;
 import reservation.Repository.SlotRepository;
+import reservation.Service.SlotService;
 
 @Component
 public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 	@Autowired
 	private SlotRepository slotRepository;
+	
 	@Autowired
-	private RedisTemplate<String, Object> redisTemplate;
+	private SlotService slotService; 
 
 	public RedisExpirationListener(RedisMessageListenerContainer listenerContainer) {
 		super(listenerContainer);
@@ -39,12 +41,7 @@ public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 				return;
 			}
 			Long slotId = Long.parseLong(slotIdString);
-
-			Slot slot = slotRepository.findById(slotId).orElse(null);
-			if (slot != null && slot.getStatus() == Slot.Status.UNAVAILABLE) {
-				slot.setStatus(Slot.Status.AVAILABLE);
-				slotRepository.save(slot);
-			}
+			slotService.markSlotHoldingToAvailable(slotId);
 		}
 	}
 

@@ -44,7 +44,7 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
 	List<Slot> getSlotsBySeatCapacityAndDateAndTime(@Param("capacity") int capacity, @Param("date") LocalDate date,
 			@Param("time") LocalTime time);
 	
-	@Query("SELECT COUNT(s) > 0 FROM Slot s WHERE s.id = :id AND s.status = 'AVAILABLE'")
+	@Query("SELECT COUNT(s) > 0 FROM Slot s WHERE s.id = :id AND s.status = 'HOLDING'")
 	boolean isSlotAvailable(@Param("id") long slotId);
 	
 	//if I have 50 days, but slot have 30 days, it will return 30 days
