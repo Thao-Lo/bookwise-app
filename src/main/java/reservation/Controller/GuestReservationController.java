@@ -51,7 +51,7 @@ public class GuestReservationController {
 	@Autowired
 	TimeZoneConverter timeZoneConverter;
 	@Autowired
-	private SlotService slotService; 
+	private SlotService slotService;
 	@Autowired
 	private StripeService stripeService;
 
@@ -102,6 +102,8 @@ public class GuestReservationController {
 	public ResponseEntity<Object> createPayment(@RequestParam String sessionId, Principal principal) {
 		System.out.println("sessionId payment: " + sessionId);
 		String key = "reservation:" + sessionId;
+		String backupKey = "backup:" + sessionId;
+
 		if (principal == null) {
 			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
 					HttpStatus.UNAUTHORIZED);
@@ -114,7 +116,6 @@ public class GuestReservationController {
 		if (reservationData == null || !reservationData.containsKey("reservation")) {
 			return new ResponseEntity<>(Map.of("error", "Session not found or expired"), HttpStatus.BAD_REQUEST);
 		}
-
 		try {
 			ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
 
@@ -125,10 +126,12 @@ public class GuestReservationController {
 			}
 
 			long amount = (long) reservationDTO.getCapacity() * PRICE_PER_CAPACITY * 100; // convert to cents
-			PaymentIntent paymentIntent = stripeService.createPaymentIntent(amount, user.getEmail(), sessionId);					
-			
-			//save PaymentIntent Id to Redis
+			PaymentIntent paymentIntent = stripeService.createPaymentIntent(amount, user.getEmail(), sessionId);
+
+			// save PaymentIntent Id to Redis reservation: and backup:
 			redisTemplate.opsForHash().put(key, "paymentIntentId", paymentIntent.getId());
+			redisTemplate.opsForHash().put(backupKey, "paymentIntentId", paymentIntent.getId());
+
 			System.out.println("paymentIntentId" + paymentIntent.getId());
 
 			return new ResponseEntity<>(Map.of("clientSecret", paymentIntent.getClientSecret(), "message",
@@ -185,6 +188,7 @@ public class GuestReservationController {
 			GuestReservation reservation = guestReservationService.findReservationById(reservationDTO.getId());
 			emailService.sendBookingConfirmation(reservation);
 			redisService.deleteKey(sessionId);
+			redisTemplate.delete("backup" + sessionId);
 			guestReservationService.releaseRedissonLock(reservationDTO.getId());
 
 			return new ResponseEntity<>(
@@ -230,30 +234,33 @@ public class GuestReservationController {
 	@DeleteMapping("/reservation/delete-redis-key")
 	ResponseEntity<Object> getUserReservation(@RequestParam(required = true) String sessionId) throws StripeException {
 		String existingKey = "reservation:" + sessionId;
+		String existingBackupKey = "backup:" + sessionId;
 
 		// by default, field key is object
 		Map<Object, Object> rawData = redisTemplate.opsForHash().entries(existingKey);
-		
-		if(rawData == null || rawData.isEmpty()) {
-			return new ResponseEntity<>(Map.of("error","SessionId is expired or no longer exist"), HttpStatus.NOT_FOUND);
+
+		if (rawData == null || rawData.isEmpty()) {
+			return new ResponseEntity<>(Map.of("error", "SessionId is expired or no longer exist"),
+					HttpStatus.NOT_FOUND);
 		}
 		// casting to match the template String, Object
 		Map<String, Object> reservationData = rawData.entrySet().stream()
 				.collect(Collectors.toMap(entry -> (String) entry.getKey(), Map.Entry::getValue));
-		
+
 		Long slotId = Long.parseLong((String) reservationData.get("id"));
-		
-		String existingBackupKey = "reservation:" + sessionId + ":" + slotId;
+
 		try {
 			redisService.deleteKey(sessionId);
 			redisTemplate.delete(existingBackupKey);
 			guestReservationService.releaseRedissonLock(slotId);
-			slotService.markSlotHoldingToAvailable(slotId);	
-			stripeService.cancelPaymentIntent((String)reservationData.get("paymentIntentId"), "User change their booking slot");
-		}catch(Exception e) {
-			return new ResponseEntity<>(Map.of("error","Failed to perform Redis clean up", "details", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			slotService.markSlotHoldingToAvailable(slotId);
+			stripeService.cancelPaymentIntent((String) reservationData.get("paymentIntentId"), "duplicate");
+		} catch (Exception e) {
+			return new ResponseEntity<>(Map.of("error", "Failed to perform Redis clean up", "details", e.getMessage()),
+					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		return new ResponseEntity<>(Map.of("message", "Delete Redis key and release Redisson lock successfully."), HttpStatus.OK);
+		return new ResponseEntity<>(Map.of("message", "Delete Redis key and release Redisson lock successfully."),
+				HttpStatus.OK);
 	}
 
 //	@PostMapping("/user/reservation/confirm")

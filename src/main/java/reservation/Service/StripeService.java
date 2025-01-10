@@ -28,26 +28,22 @@ public class StripeService {
 
 	public boolean cancelPaymentIntent(String paymentIntentId, String cancellationReason) throws StripeException {
 	    // Retrieve the PaymentIntent
-		PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+		PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);		
 		
-		if (paymentIntent == null) {
-			return false;
-		}
 		 // Determine the cancellation reason
 		String reasonToCancel = (cancellationReason != null && !cancellationReason.isEmpty())
-				? cancellationReason : "Testing in progress";
+				? cancellationReason : "requested_by_customer";
 		
 		PaymentIntentCancelParams.Builder params = PaymentIntentCancelParams.builder();
 
 		PaymentIntentCancelParams.CancellationReason reason = PaymentIntentCancelParams.CancellationReason
-				.valueOf(reasonToCancel);
+				.valueOf(reasonToCancel.toUpperCase());
 		if (reason != null) {
 			params.setCancellationReason(reason);
 		} else {
 			logger.warning("Invalid cancellation reason provided: " + reasonToCancel);
-		}
-		paymentIntent.cancel(params.build());
-
+		}		
+		paymentIntent.cancel(params.build());	
 		return true;
 	}
 
