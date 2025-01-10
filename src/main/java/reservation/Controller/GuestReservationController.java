@@ -2,7 +2,6 @@ package reservation.Controller;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +31,7 @@ import reservation.Service.EmailService;
 import reservation.Service.GuestReservationService;
 import reservation.Service.RedisService;
 import reservation.Service.SlotService;
+import reservation.Service.StripeService;
 import reservation.Service.UserService;
 import reservation.Utils.TimeZoneConverter;
 
@@ -52,6 +52,8 @@ public class GuestReservationController {
 	TimeZoneConverter timeZoneConverter;
 	@Autowired
 	private SlotService slotService; 
+	@Autowired
+	private StripeService stripeService;
 
 	final int PRICE_PER_CAPACITY = 50;
 
@@ -123,8 +125,9 @@ public class GuestReservationController {
 			}
 
 			long amount = (long) reservationDTO.getCapacity() * PRICE_PER_CAPACITY * 100; // convert to cents
-			PaymentIntent paymentIntent = PaymentIntent.create(PaymentIntentCreateParams.builder().setAmount(amount)
-					.setCurrency("aud").setReceiptEmail(user.getEmail()).putMetadata("sessionId", sessionId).build());
+			PaymentIntent paymentIntent = stripeService.createPaymentIntent(amount, user.getEmail(), sessionId);					
+			
+			//save PaymentIntent Id to Redis
 			redisTemplate.opsForHash().put(key, "paymentIntentId", paymentIntent.getId());
 			System.out.println("paymentIntentId" + paymentIntent.getId());
 
@@ -182,6 +185,7 @@ public class GuestReservationController {
 			GuestReservation reservation = guestReservationService.findReservationById(reservationDTO.getId());
 			emailService.sendBookingConfirmation(reservation);
 			redisService.deleteKey(sessionId);
+			guestReservationService.releaseRedissonLock(reservationDTO.getId());
 
 			return new ResponseEntity<>(
 					Map.of("message", "Your booking is completed. Please check your email for booking confirmation"),
@@ -224,7 +228,7 @@ public class GuestReservationController {
 	}
 
 	@DeleteMapping("/reservation/delete-redis-key")
-	ResponseEntity<Object> getUserReservation(@RequestParam(required = true) String sessionId) {
+	ResponseEntity<Object> getUserReservation(@RequestParam(required = true) String sessionId) throws StripeException {
 		String existingKey = "reservation:" + sessionId;
 
 		// by default, field key is object
@@ -239,16 +243,16 @@ public class GuestReservationController {
 		
 		Long slotId = Long.parseLong((String) reservationData.get("id"));
 		
-		String existingBackupKey = "reservation" + sessionId + ":" + slotId;
+		String existingBackupKey = "reservation:" + sessionId + ":" + slotId;
 		try {
 			redisService.deleteKey(sessionId);
 			redisTemplate.delete(existingBackupKey);
 			guestReservationService.releaseRedissonLock(slotId);
 			slotService.markSlotHoldingToAvailable(slotId);	
+			stripeService.cancelPaymentIntent((String)reservationData.get("paymentIntentId"), "User change their booking slot");
 		}catch(Exception e) {
 			return new ResponseEntity<>(Map.of("error","Failed to perform Redis clean up", "details", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
 		return new ResponseEntity<>(Map.of("message", "Delete Redis key and release Redisson lock successfully."), HttpStatus.OK);
 	}
 
