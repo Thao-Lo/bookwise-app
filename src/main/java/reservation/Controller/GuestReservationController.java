@@ -188,7 +188,7 @@ public class GuestReservationController {
 			GuestReservation reservation = guestReservationService.findReservationById(reservationDTO.getId());
 			emailService.sendBookingConfirmation(reservation);
 			redisService.deleteKey(sessionId);
-			redisTemplate.delete("backup" + sessionId);
+			redisTemplate.delete("backup:" + sessionId);
 			guestReservationService.releaseRedissonLock(reservationDTO.getId());
 
 			return new ResponseEntity<>(

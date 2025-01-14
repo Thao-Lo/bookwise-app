@@ -95,9 +95,14 @@ public class AdminUserController {
 		if (!userService.isValidRole(role)) {
 			return new ResponseEntity<>(Map.of("error", "Invalid role provided."), HttpStatus.BAD_REQUEST);
 		}
+		
 		User user = userService.findUserById(id);
+		if(user.getRole().name().equalsIgnoreCase(role)) {
+			return new ResponseEntity<>(Map.of("message", "Change is not neccessary."), HttpStatus.OK);
+		}
+		String oldRole = user.getRole().name();
 		user.setRole(Role.valueOf(role.toUpperCase()));
 		userService.updateUserRole(user);
-		return new ResponseEntity<>(Map.of("message", "Successfully change to new role"), HttpStatus.OK);
+		return new ResponseEntity<>(Map.of("message", String.format("Successfully changed %s from role: %s to new role: %s ", user.getUsername(),oldRole, user.getRole().name())), HttpStatus.OK);
 	}
 }

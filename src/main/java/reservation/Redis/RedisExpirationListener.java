@@ -9,15 +9,11 @@ import org.springframework.stereotype.Component;
 
 import com.stripe.exception.StripeException;
 
-import reservation.Entity.Slot;
-import reservation.Repository.SlotRepository;
 import reservation.Service.SlotService;
 import reservation.Service.StripeService;
 
 @Component
-public class RedisExpirationListener extends KeyExpirationEventMessageListener {
-	@Autowired
-	private SlotRepository slotRepository;
+public class RedisExpirationListener extends KeyExpirationEventMessageListener {	
 	@Autowired
 	private SlotService slotService;
 	@Autowired
