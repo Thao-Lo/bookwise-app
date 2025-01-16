@@ -24,7 +24,7 @@ import reservation.Service.UserService;
 
 @RestController
 @RequestMapping("api/v1/admin/user")
-public class AdminUserController {
+public class AdminUserController extends BaseController {
 
 	@Autowired
 	UserService userService;
@@ -34,10 +34,9 @@ public class AdminUserController {
 			@RequestParam(required = false, defaultValue = "false") boolean pageable,
 			@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
-
-		if (principal == null) {
-			return new ResponseEntity<>(Map.of("error", "Not authorized."), HttpStatus.UNAUTHORIZED);
-		}
+		
+		checkPrincipal(principal, "Not authorized." );
+		
 		if (pageable) {
 			Page<User> users = userService.showAllUsers(page, size);
 			if (users.isEmpty()) {
@@ -89,9 +88,7 @@ public class AdminUserController {
 
 	@PostMapping("/edit-role/{id}/{role}")
 	public ResponseEntity<Object> editUserRole(Principal principal, @PathVariable Long id, @PathVariable String role) {
-		if (principal == null) {
-			return new ResponseEntity<>(Map.of("error", "Not authorized."), HttpStatus.UNAUTHORIZED);
-		}
+		checkPrincipal(principal, "Not authorized." );
 		if (!userService.isValidRole(role)) {
 			return new ResponseEntity<>(Map.of("error", String.format("Invalid role provided: %s.", role)), HttpStatus.BAD_REQUEST);
 		}

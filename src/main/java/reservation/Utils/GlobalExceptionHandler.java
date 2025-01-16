@@ -9,6 +9,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import reservation.Exception.UnauthorizedException;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
 	@ExceptionHandler(MethodArgumentNotValidException.class)
@@ -28,6 +30,13 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.BAD_REQUEST);
 	}
 	
+	// Catch exception
+	// Customize Exception to check principal, return status 401
+	@ExceptionHandler (UnauthorizedException.class)
+	public ResponseEntity<Object> handleUnauthorizedException(UnauthorizedException ex ){
+		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.UNAUTHORIZED);
+	}
+	
 //	 @ExceptionHandler(UserNotFoundException.class)
 //	public ResponseEntity<Object> handleUserNotFound(UserNotFoundException ex){
 //		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.BAD_REQUEST);
@@ -38,4 +47,3 @@ public class GlobalExceptionHandler {
 //	    return new ResponseEntity<>("Something went wrong!", HttpStatus.INTERNAL_SERVER_ERROR);
 //	}
 }
-

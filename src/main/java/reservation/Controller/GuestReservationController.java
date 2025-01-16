@@ -37,7 +37,7 @@ import reservation.Utils.TimeZoneConverter;
 
 @RestController
 @RequestMapping("/api/v1/")
-public class GuestReservationController {
+public class GuestReservationController extends BaseController{
 	@Autowired
 	private RedisService redisService;
 	@Autowired
@@ -83,11 +83,9 @@ public class GuestReservationController {
 	@PreAuthorize("hasRole('GUEST')")
 	@GetMapping("/user/reservation/retrieve")
 	public ResponseEntity<Object> retrieveReservation(@RequestParam String sessionId, Principal principal) {
-		// accessToken
-		if (principal == null) {
-			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
-					HttpStatus.OK);
-		}
+		// accessToken, check principal == null 
+		checkPrincipal(principal, "You must be logged in to retrieve your booking.");
+		
 		System.out.println("principal name: " + principal.getName());
 		ReservationDTO reservationDTO = (ReservationDTO) redisService.getReservation(sessionId).get("reservation");
 		String status = (String) redisService.getReservation(sessionId).get("status");
@@ -104,10 +102,9 @@ public class GuestReservationController {
 		String key = "reservation:" + sessionId;
 		String backupKey = "backup:" + sessionId;
 
-		if (principal == null) {
-			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
-					HttpStatus.UNAUTHORIZED);
-		}
+		// accessToken, check principal == null 
+		checkPrincipal(principal, "You must be logged in to retrieve your booking.");
+		
 		// to get email
 		User user = userService.findUserByUsername(principal.getName());
 		// get data from redis
@@ -149,10 +146,9 @@ public class GuestReservationController {
 	@PostMapping("/user/reservation/confirm-reservation")
 	public ResponseEntity<Object> confirmReservation(@RequestParam String sessionId, Principal principal,
 			@RequestParam String paymentIntentId) throws StripeException {
-		if (principal == null) {
-			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
-					HttpStatus.UNAUTHORIZED);
-		}
+		// accessToken, check principal == null 
+		checkPrincipal(principal, "You must be logged in to retrieve your booking.");
+		
 		Map<String, Object> reservationData = redisService.getReservation(sessionId);
 
 		if (reservationData == null || !reservationData.containsKey("reservation")) {

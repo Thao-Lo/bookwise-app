@@ -29,7 +29,7 @@ import reservation.Utils.JwtUtil;
 
 @RestController
 @RequestMapping("/api/v1")
-public class LoginController {
+public class LoginController extends BaseController {
 
 	@Autowired
 	UserService userService;
@@ -38,8 +38,7 @@ public class LoginController {
 	@Autowired
 	RedisService redisService;
 	@Autowired
-	PasswordEncoder passwordEncoder;
-	
+	PasswordEncoder passwordEncoder;	
 	@Autowired
 	JwtService jwtService;
 
@@ -107,7 +106,7 @@ public class LoginController {
 			@RequestBody Map<String, String> request) {
 		System.out.println("authHeader" + authHeader);
 		// get token from header
-		String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+		String token = jwtService.extractAccessToken(authHeader);
 		String refreshToken = request.get("refreshToken");
 		
 		// check token expired time
@@ -124,10 +123,12 @@ public class LoginController {
 	// to get user information if they have accessToken
 	@GetMapping("/user/profile")
 	public ResponseEntity<Object> getUserProfile(Principal principal) {
-		if (principal == null) {
-			return new ResponseEntity<>(Map.of("error", "You need to login to see your profile."),
-					HttpStatus.UNAUTHORIZED);
-		}
+		checkPrincipal(principal, "You need to login to see your profile.");
+//		if (principal == null) {
+//			return new ResponseEntity<>(Map.of("error", "You need to login to see your profile."),
+//					HttpStatus.UNAUTHORIZED);
+//		}
+		
 		String username = principal.getName();
 		User user = userService.findUserbyUsername(username);
 		if (user == null) {
