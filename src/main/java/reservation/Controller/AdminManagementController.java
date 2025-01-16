@@ -42,7 +42,7 @@ import reservation.Utils.TimeZoneConverter;
 @RequestMapping("api/v1/admin/")
 @DependsOn("startRedisServer")
 //@DependsOn("redissonClient")
-public class AdminManagementController {
+public class AdminManagementController extends BaseController {
 	@Autowired
 	SeatService seatService;
 	@Autowired
@@ -59,35 +59,36 @@ public class AdminManagementController {
 	public ResponseEntity<Object> getAllSeats(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
 		Page<Seat> seats = seatService.getAllSeat(page, size);
-		if (seats.isEmpty()) {
-			return new ResponseEntity<>(Map.of("Error", "No seats found"), HttpStatus.NOT_FOUND);
-		}
+		// from Base Controller
+		checkPageNotEmpty(seats, "No seats found");
+
 		return new ResponseEntity<>(
 				Map.of("seats", seats.getContent(), "seatsPerPage", seats.getNumberOfElements(), "currentPage",
 						seats.getNumber(), "totalPage", seats.getTotalPages(), "totalSeats", seats.getTotalElements()),
 				HttpStatus.OK);
 	}
-	
+
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/seats/reservation-counts")
-	public ResponseEntity<Object> getResearvationCountsPerSeat(){
+	public ResponseEntity<Object> getResearvationCountsPerSeat() {
 		try {
 			List<SeatReservationCountDTO> seatReservationCountDTO = seatService.countTotalReservationsPerSeat();
-			return new ResponseEntity<>(Map.of("message", "Successfully get reservation counts.", 
-					"seatDataset", seatReservationCountDTO), HttpStatus.OK);
-		}catch (Exception e) {
+			return new ResponseEntity<>(
+					Map.of("message", "Successfully get reservation counts.", "seatDataset", seatReservationCountDTO),
+					HttpStatus.OK);
+		} catch (Exception e) {
 			return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.OK);
-		}		
+		}
 	}
-	
+
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/dates")
 	public ResponseEntity<Object> getAllDates(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
 		Page<Schedule> schedulesPage = scheduleService.getAllDates(page, size);
-		if (schedulesPage.isEmpty()) {
-			return new ResponseEntity<>(Map.of("Error", "No Dates found"), HttpStatus.NOT_FOUND);
-		}
+		// from Base Controller
+		checkPageNotEmpty(schedulesPage, "No Dates found");
+
 		List<ScheduleResponse> scheduleResponses = schedulesPage.getContent().stream().map(schedule -> {
 			LocalDateTime datetime = timeZoneConverter.convertToLocalTime(schedule.getDatetime(), "Australia/Sydney");
 			ScheduleResponse scheduleResponse = new ScheduleResponse();
@@ -107,9 +108,9 @@ public class AdminManagementController {
 	public ResponseEntity<Object> getAllSlots(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
 		Page<Slot> slotsPage = slotService.getAllSlots(page, size);
-		if (slotsPage.isEmpty()) {
-			return new ResponseEntity<>(Map.of("Error", "No Slots found"), HttpStatus.NOT_FOUND);
-		}
+		// from Base Controller
+		checkPageNotEmpty(slotsPage, "No Slots found");
+
 		List<SlotResponse> SlotResponses = slotsPage.getContent().stream().map(slot -> {
 			LocalDateTime datetime = timeZoneConverter.convertToLocalTime(slot.getSchedule().getDatetime(),
 					"Australia/Sydney");
@@ -131,11 +132,13 @@ public class AdminManagementController {
 	@GetMapping("/reservations")
 	public ResponseEntity<Object> getAllReservations(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
+		// sort by slot_id to show dates far away 1st
 		Pageable pageable = PageRequest.of(page, size, Sort.by("slot.id").descending());
+		
 		Page<GuestReservation> reservationsPage = guestReservationService.getAllReservation(pageable);
-		if (reservationsPage.isEmpty()) {
-			return new ResponseEntity<>(Map.of("Error", "No Reservations found"), HttpStatus.NOT_FOUND);
-		}
+		// from Base Controller
+		checkPageNotEmpty(reservationsPage, "No Reservations found");
+
 		List<ReservationDTO> reservationResponses = reservationsPage.getContent().stream().map(reservation -> {
 			LocalDateTime datetime = timeZoneConverter
 					.convertToLocalTime(reservation.getSlot().getSchedule().getDatetime(), "Australia/Sydney");

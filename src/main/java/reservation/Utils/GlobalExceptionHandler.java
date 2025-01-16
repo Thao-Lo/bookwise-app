@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import reservation.Exception.NotFoundException;
 import reservation.Exception.UnauthorizedException;
 
 @ControllerAdvice
@@ -35,6 +36,11 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler (UnauthorizedException.class)
 	public ResponseEntity<Object> handleUnauthorizedException(UnauthorizedException ex ){
 		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.UNAUTHORIZED);
+	}
+	
+	@ExceptionHandler (NotFoundException.class)
+	public ResponseEntity<Object> handleNotFoundException(NotFoundException ex){
+		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.NOT_FOUND); 
 	}
 	
 //	 @ExceptionHandler(UserNotFoundException.class)
