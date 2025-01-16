@@ -29,14 +29,9 @@ import reservation.Utils.JwtUtil;
 
 @RestController
 @RequestMapping("/api/v1")
-public class LoginController extends BaseController {
-
+public class LoginController extends BaseController{
 	@Autowired
-	UserService userService;
-	@Autowired
-	JwtUtil jwtUtil;
-	@Autowired
-	RedisService redisService;
+	JwtUtil jwtUtil;	
 	@Autowired
 	PasswordEncoder passwordEncoder;	
 	@Autowired

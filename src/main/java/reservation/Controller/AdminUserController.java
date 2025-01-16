@@ -26,9 +26,6 @@ import reservation.Service.UserService;
 @RequestMapping("api/v1/admin/user")
 public class AdminUserController extends BaseController {
 
-	@Autowired
-	UserService userService;
-
 	@GetMapping("/list")
 	public ResponseEntity<Object> getUserList(Principal principal,
 			@RequestParam(required = false, defaultValue = "false") boolean pageable,
@@ -39,9 +36,9 @@ public class AdminUserController extends BaseController {
 		
 		if (pageable) {
 			Page<User> users = userService.showAllUsers(page, size);
-			if (users.isEmpty()) {
-				return new ResponseEntity<>(Map.of("error", "No users found."), HttpStatus.NOT_FOUND);
-			}
+			// from Base Controller
+			checkPageNotEmpty(users, "No users found.");
+			
 			// map Stream<User> thành Stream<UserResponse>
 			List<UserResponse> userPage = users.getContent().stream().map(
 					user -> {
@@ -60,9 +57,8 @@ public class AdminUserController extends BaseController {
 					"totalUsers", users.getTotalElements()), HttpStatus.OK);
 		}
 		List<User> users = userService.showAllUsers();
-		if (users.isEmpty()) {
-			return new ResponseEntity<>(Map.of("error", "No users found."), HttpStatus.NOT_FOUND);
-		}
+		checkListNotEmpty(users,"No users found.");
+		
 //		List<UserResponse> userList = new ArrayList<>();
 //		for (User user : users) {
 //			UserResponse userResponse = new UserResponse();

@@ -37,21 +37,7 @@ import reservation.Utils.TimeZoneConverter;
 
 @RestController
 @RequestMapping("/api/v1/")
-public class GuestReservationController extends BaseController{
-	@Autowired
-	private RedisService redisService;
-	@Autowired
-	GuestReservationService guestReservationService;
-	@Autowired
-	EmailService emailService;
-	@Autowired
-	UserService userService;
-	@Autowired
-	private RedisTemplate<String, Object> redisTemplate;
-	@Autowired
-	TimeZoneConverter timeZoneConverter;
-	@Autowired
-	private SlotService slotService;
+public class GuestReservationController extends BaseController{	
 	@Autowired
 	private StripeService stripeService;
 
@@ -115,12 +101,8 @@ public class GuestReservationController extends BaseController{
 		}
 		try {
 			ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
-
-			boolean isSlotAvailable = guestReservationService.isSlotAvailable(reservationDTO.getId());
-
-			if (!isSlotAvailable) {
-				return new ResponseEntity<>(Map.of("error", "Slot is no longer available"), HttpStatus.NOT_FOUND);
-			}
+			//check if isSlotAvailable, not throw exception, and return
+			validateSlotAvalability(reservationDTO.getId());
 
 			long amount = (long) reservationDTO.getCapacity() * PRICE_PER_CAPACITY * 100; // convert to cents
 			PaymentIntent paymentIntent = stripeService.createPaymentIntent(amount, user.getEmail(), sessionId);
@@ -162,12 +144,9 @@ public class GuestReservationController extends BaseController{
 
 		try {
 			ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
-
-			boolean isSlotAvailable = guestReservationService.isSlotAvailable(reservationDTO.getId());
-
-			if (!isSlotAvailable) {
-				return new ResponseEntity<>(Map.of("error", "Slot is no longer available"), HttpStatus.NOT_FOUND);
-			}
+			//check if isSlotAvailable, not throw exception, and return
+			validateSlotAvalability(reservationDTO.getId());
+			
 			PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
 
 			if (!"succeeded".equals(paymentIntent.getStatus())) {
@@ -258,41 +237,10 @@ public class GuestReservationController extends BaseController{
 		return new ResponseEntity<>(Map.of("message", "Delete Redis key and release Redisson lock successfully."),
 				HttpStatus.OK);
 	}
-
-//	@PostMapping("/user/reservation/confirm")
-//	public ResponseEntity<Object> confirmReservation1(@RequestParam String sessionId, Principal principal) {
-//		if (principal == null) {
-//			return new ResponseEntity<>(Map.of("error", "You must be logged in to retrieve your booking."),
-//					HttpStatus.UNAUTHORIZED);
-//		}
-//		Map<String, Object> reservationData = redisService.getReservation(sessionId);
-//
-//		if (reservationData == null || !reservationData.containsKey("reservation")) {
-//			return new ResponseEntity<>(Map.of("error", "Session not found or expired"), HttpStatus.BAD_REQUEST);
-//		}
-//		
-//		// change status from HOLDING to CONFIRMING
-//		redisService.setStatusToConfirming(sessionId);
-//		
-//		try {			
-//			ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
-//			
-//			boolean isSlotAvailable = guestReservationService.isSlotAvailable(reservationDTO.getId());
-//			
-//			if (!isSlotAvailable) {
-//				return new ResponseEntity<>(Map.of("error", "Slot is no longer available"), HttpStatus.NOT_FOUND);
-//			}
-//			
-//			guestReservationService.saveNewReservation(principal.getName(), reservationDTO.getId(),
-//					reservationDTO.getCapacity());
-//			
-//			//send confirmation Email
-//			GuestReservation reservation = guestReservationService.findReservationById(reservationDTO.getId());
-//			emailService.sendBookingConfirmation(reservation);
-//		} finally {
-//			redisService.deleteKey(sessionId);
-//		}
-//
-//		return new ResponseEntity<>(Map.of("message", "Your booking is completed. Please check your email for booking confirmation"), HttpStatus.OK);
-//	}
+	
+	private void validateSlotAvalability(Long slotId) {		
+		boolean isSlotAvailable = guestReservationService.isSlotAvailable(slotId);
+		checkIsSlotAvailable(isSlotAvailable, "Slot is no longer available");		
+	}
+	
 }

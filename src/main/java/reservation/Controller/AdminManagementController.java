@@ -47,12 +47,7 @@ public class AdminManagementController extends BaseController {
 	SeatService seatService;
 	@Autowired
 	ScheduleService scheduleService;
-	@Autowired
-	SlotService slotService;
-	@Autowired
-	GuestReservationService guestReservationService;
-	@Autowired
-	TimeZoneConverter timeZoneConverter;
+
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/seats")
