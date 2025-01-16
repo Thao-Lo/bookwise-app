@@ -185,7 +185,7 @@ public class GuestReservationController {
 			redisService.setStatusToConfirming(sessionId);
 
 			// send confirmation Email
-			GuestReservation reservation = guestReservationService.findReservationById(reservationDTO.getId());
+			GuestReservation reservation = guestReservationService.findReservationBySlotId(reservationDTO.getId());
 			emailService.sendBookingConfirmation(reservation);
 			redisService.deleteKey(sessionId);
 			redisTemplate.delete("backup:" + sessionId);

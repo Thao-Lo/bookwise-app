@@ -8,6 +8,9 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import reservation.DTO.ReservationDTO;
 import reservation.DTO.ScheduleResponse;
+import reservation.DTO.SeatReservationCountDTO;
 import reservation.DTO.SlotResponse;
 import reservation.Entity.GuestReservation;
 import reservation.Entity.GuestReservation.Status;
@@ -63,7 +67,19 @@ public class AdminManagementController {
 						seats.getNumber(), "totalPage", seats.getTotalPages(), "totalSeats", seats.getTotalElements()),
 				HttpStatus.OK);
 	}
-
+	
+	@PreAuthorize("hasRole('ADMIN')")
+	@GetMapping("/seats/reservation-counts")
+	public ResponseEntity<Object> getResearvationCountsPerSeat(){
+		try {
+			List<SeatReservationCountDTO> seatReservationCountDTO = seatService.countTotalReservationsPerSeat();
+			return new ResponseEntity<>(Map.of("message", "Successfully get reservation counts.", 
+					"seatDataset", seatReservationCountDTO), HttpStatus.OK);
+		}catch (Exception e) {
+			return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.OK);
+		}		
+	}
+	
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/dates")
 	public ResponseEntity<Object> getAllDates(@RequestParam(required = false, defaultValue = "0") int page,
@@ -115,7 +131,8 @@ public class AdminManagementController {
 	@GetMapping("/reservations")
 	public ResponseEntity<Object> getAllReservations(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
-		Page<GuestReservation> reservationsPage = guestReservationService.getAllReservation(page, size);
+		Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+		Page<GuestReservation> reservationsPage = guestReservationService.getAllReservation(pageable);
 		if (reservationsPage.isEmpty()) {
 			return new ResponseEntity<>(Map.of("Error", "No Reservations found"), HttpStatus.NOT_FOUND);
 		}

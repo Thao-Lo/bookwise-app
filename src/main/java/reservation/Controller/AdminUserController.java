@@ -93,7 +93,7 @@ public class AdminUserController {
 			return new ResponseEntity<>(Map.of("error", "Not authorized."), HttpStatus.UNAUTHORIZED);
 		}
 		if (!userService.isValidRole(role)) {
-			return new ResponseEntity<>(Map.of("error", "Invalid role provided."), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(Map.of("error", String.format("Invalid role provided: %s.", role)), HttpStatus.BAD_REQUEST);
 		}
 		
 		User user = userService.findUserById(id);

@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ReservationDTO {
 //	private String sessionId;
+	//slotId
 	private long id;
 	private String tableName;
 	private int capacity;

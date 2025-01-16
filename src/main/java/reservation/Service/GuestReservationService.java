@@ -33,8 +33,8 @@ public class GuestReservationService {
 	@Autowired
 	private RedissonClient redissonClient;
 
-	public Page<GuestReservation> getAllReservation(int page, int size) {
-		Pageable pageable = PageRequest.of(page, size);
+	public Page<GuestReservation> getAllReservation(Pageable pageable) {
+//		Pageable pageable = PageRequest.of(page, size);
 		return guestReservationRepository.findAll(pageable);
 	}
 
@@ -113,6 +113,11 @@ public class GuestReservationService {
 	}
 
 	public GuestReservation findReservationById(Long id) {
+		return guestReservationRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+
+	}
+	public GuestReservation findReservationBySlotId(Long id) {
 		return guestReservationRepository.findBySlotId(id)
 				.orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
 
