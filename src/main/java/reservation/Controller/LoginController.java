@@ -22,6 +22,7 @@ import jakarta.validation.Valid;
 import reservation.DTO.LoginRequest;
 import reservation.DTO.UserResponse;
 import reservation.Entity.User;
+import reservation.Service.JwtService;
 import reservation.Service.RedisService;
 import reservation.Service.UserService;
 import reservation.Utils.JwtUtil;
@@ -38,9 +39,13 @@ public class LoginController {
 	RedisService redisService;
 	@Autowired
 	PasswordEncoder passwordEncoder;
+	
+	@Autowired
+	JwtService jwtService;
 
 	@PostMapping("/login")
 	public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {
+		// from user input either username or email
 		User user = userService.findUserByUsernameOrEmail(request.getUsernameOrEmail());
 		if (user == null) {
 			return new ResponseEntity<>(Map.of("error", "Invalid Username or Email."), HttpStatus.BAD_REQUEST);
@@ -54,10 +59,11 @@ public class LoginController {
 		System.out.println("Password matches: " + passwordEncoder.matches(request.getPassword(), user.getPassword()));
 
 		// compare raw password with hashed password in db -> matches
-//		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+		// BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
 			return new ResponseEntity<>(Map.of("error", "Incorrect password."), HttpStatus.BAD_REQUEST);
 		}
+		//generate Tokens, store username and role in token
 		String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole().toString());
 		String refreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getRole().toString());
 
@@ -70,7 +76,8 @@ public class LoginController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
+	
+	// refresh accessToken if refreshToken is still valid
 	@PostMapping("/refresh-token")
 	public ResponseEntity<Map<String, String>> refreshToken(@RequestBody Map<String, String> request) {
 		String refreshToken = request.get("refreshToken");
@@ -80,13 +87,13 @@ public class LoginController {
 						HttpStatus.UNAUTHORIZED);
 			}
 			Claims claims = jwtUtil.validateToken(refreshToken); // will throw exception here
+			// extract username and role
 			String username = claims.getSubject();
 			String role = claims.get("role", String.class);
 
-			String newAccessToken = jwtUtil.generateAccessToken(username, role);
-//			Map<String, String> response = new HashMap<>();
-//			response.put("accessToken", newAccessToken);
+			String newAccessToken = jwtUtil.generateAccessToken(username, role);			
 			return new ResponseEntity<>(Map.of("accessToken", newAccessToken), HttpStatus.OK);
+			
 		} catch (ExpiredJwtException e) {
 			return new ResponseEntity<>(Map.of("error", "Token expired"), HttpStatus.UNAUTHORIZED);
 		} catch (JwtException e) {
@@ -94,23 +101,27 @@ public class LoginController {
 		}
 	}
 
+	// if user logout, token will store in Blacklist in Redis to revent hacker
 	@PostMapping("/user/logout")
 	public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String authHeader,
 			@RequestBody Map<String, String> request) {
 		System.out.println("authHeader" + authHeader);
+		// get token from header
 		String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-
 		String refreshToken = request.get("refreshToken");
-
+		
+		// check token expired time
 		long refreshTokenTTL = jwtUtil.getRemainingTokenTTL(refreshToken);
 		long accessTokenTTL = jwtUtil.getRemainingTokenTTL(token);
-
+		
+		//add to Redis blacklist
 		redisService.blacklistToken(token, accessTokenTTL);
 		redisService.blacklistToken(refreshToken, refreshTokenTTL);
 
 		return new ResponseEntity<>(Map.of("message", "Logout successfully."), HttpStatus.OK);
 	}
 
+	// to get user information if they have accessToken
 	@GetMapping("/user/profile")
 	public ResponseEntity<Object> getUserProfile(Principal principal) {
 		if (principal == null) {

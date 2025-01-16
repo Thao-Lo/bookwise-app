@@ -131,7 +131,7 @@ public class AdminManagementController {
 	@GetMapping("/reservations")
 	public ResponseEntity<Object> getAllReservations(@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "10") int size) {
-		Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+		Pageable pageable = PageRequest.of(page, size, Sort.by("slot.id").descending());
 		Page<GuestReservation> reservationsPage = guestReservationService.getAllReservation(pageable);
 		if (reservationsPage.isEmpty()) {
 			return new ResponseEntity<>(Map.of("Error", "No Reservations found"), HttpStatus.NOT_FOUND);
