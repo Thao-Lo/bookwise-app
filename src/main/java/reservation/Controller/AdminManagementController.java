@@ -58,9 +58,7 @@ public class AdminManagementController extends BaseController {
 		checkPageNotEmpty(seats, "No seats found");
 
 		return new ResponseEntity<>(
-				Map.of("seats", seats.getContent(), "seatsPerPage", seats.getNumberOfElements(), "currentPage",
-						seats.getNumber(), "totalPage", seats.getTotalPages(), "totalSeats", seats.getTotalElements()),
-				HttpStatus.OK);
+				createPaginationReturningData(seats, "seats", seats.getContent()),HttpStatus.OK);
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")
@@ -93,9 +91,7 @@ public class AdminManagementController extends BaseController {
 			return scheduleResponse;
 		}).toList();
 
-		return new ResponseEntity<>(Map.of("dates", scheduleResponses, "datesPerPage",
-				schedulesPage.getNumberOfElements(), "currentPage", schedulesPage.getNumber(), "totalPage",
-				schedulesPage.getTotalPages(), "totalDates", schedulesPage.getTotalElements()), HttpStatus.OK);
+		return new ResponseEntity<>(createPaginationReturningData(schedulesPage, "dates", scheduleResponses), HttpStatus.OK);
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")
@@ -118,9 +114,7 @@ public class AdminManagementController extends BaseController {
 			slotResponse.setStatus(slot.getStatus().name());
 			return slotResponse;
 		}).toList();
-		return new ResponseEntity<>(Map.of("slots", SlotResponses, "slotsPerPage", slotsPage.getNumberOfElements(),
-				"currentPage", slotsPage.getNumber(), "totalPage", slotsPage.getTotalPages(), "totalSlots",
-				slotsPage.getTotalElements()), HttpStatus.OK);
+		return new ResponseEntity<>(createPaginationReturningData(slotsPage, "slots", SlotResponses), HttpStatus.OK);
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")
@@ -146,12 +140,10 @@ public class AdminManagementController extends BaseController {
 			reservationResponse.setStatus(reservation.getStatus().name());
 			return reservationResponse;
 		}).toList();
-		return new ResponseEntity<>(Map.of("reservations", reservationResponses, "reservationsPerPage",
-				reservationsPage.getNumberOfElements(), "currentPage", reservationsPage.getNumber(), "totalPage",
-				reservationsPage.getTotalPages(), "totalReservations", reservationsPage.getTotalElements()),
+		return new ResponseEntity<>(createPaginationReturningData(reservationsPage, "reservations", reservationResponses),				
 				HttpStatus.OK);
-	}
-
+	}	
+	
 	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping("/reservations/edit/{id}/{status}")
 	public ResponseEntity<Object> editReservationStatus(@PathVariable Long id, @PathVariable String status) {
@@ -165,5 +157,16 @@ public class AdminManagementController extends BaseController {
 		guestReservationService.updateReservationStatus(reservation);
 
 		return new ResponseEntity<>(Map.of("message", "Successfully " + updatedStatus + " the booking"), HttpStatus.OK);
+	}	
+
+	private Map<String, Object> createPaginationReturningData(Page<?> page, String contentKey, Object content){
+		String keyPerPage = contentKey + "PerPage";
+		return Map.of(
+				contentKey, content,
+				keyPerPage, page.getNumberOfElements(),
+				"currentPage", page.getNumber(),
+				"totalPage", page.getTotalPages(),
+				"totalRows", page.getTotalElements()
+				);
 	}
 }
