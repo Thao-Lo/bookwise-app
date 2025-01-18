@@ -20,16 +20,20 @@ public class RedisService {
 	private RedisTemplate<String, Object> redisTemplate;
 
 	private static final long TTL = 300; // Time to live 5 mins
+	// Centralized Error Message
+	private static final String SESSION_NOT_FOUND = "Session data not found or expired.";
+	private static final String INVALID_RESERVATION_STATE = "Reservation is not in a valid state for confirmation.";
+
 
 	public String saveReservation(ReservationDTO reservationDTO) {
 		// create unique number
 		String sessionId = UUID.randomUUID().toString();
 		// "reservation: 945f9351-e32b-495e-bcfa-4d59056d7470"
 		//Primary key
-		String key = "reservation:" + sessionId;
+		String key = generateRedisKey(sessionId);
 		
 		//Backup key
-		String backupKey = "backup:" + sessionId;
+		String backupKey = generateRedisBackupKey(sessionId);
 				
 		// "reservation: 945f9351-e32b-495e-bcfa-4d59056d7470" slotId "178"
 		redisTemplate.opsForHash().put(key, "id", String.valueOf(reservationDTO.getId()));
@@ -51,20 +55,20 @@ public class RedisService {
 	}
 
 	public Map<String, Object> getReservation(String sessionId) {
-		String key = "reservation:" + sessionId;
+		String key = generateRedisKey(sessionId);
 
 		// return type is object, alsways String -> casting
-		String id = (String) redisTemplate.opsForHash().get(key, "id");
-		String tableName = (String) redisTemplate.opsForHash().get(key, "tableName");
-		String capacity = (String) redisTemplate.opsForHash().get(key, "capacity");
-		String date = (String) redisTemplate.opsForHash().get(key, "date");
-		String time = (String) redisTemplate.opsForHash().get(key, "time");
-		String status = (String) redisTemplate.opsForHash().get(key, "status");
-		String bookingStatus = (String) redisTemplate.opsForHash().get(key, "bookingStatus");
+		String id = getHashValue(key, "id");
+		String tableName = getHashValue(key, "tableName");
+		String capacity = getHashValue(key, "capacity");
+		String date = getHashValue(key, "date");
+		String time = getHashValue(key, "time");
+		String status = getHashValue(key, "status");
+		String bookingStatus = getHashValue(key, "bookingStatus");
 
 //	    Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
 		if (id == null || tableName == null || capacity == null || date == null || time == null || status == null || bookingStatus == null) {
-			throw new IllegalArgumentException("Session data not found or expired.");
+			throw new IllegalArgumentException(SESSION_NOT_FOUND);
 		}
 		ReservationDTO reservationDTO = new ReservationDTO();
 //		reservationDTO.setSessionId(sessionId);
@@ -80,32 +84,41 @@ public class RedisService {
 		reservationResult.put("status", bookingStatus);
 		return reservationResult;
 	}
+	// centralized function to create Redis key
+	public String generateRedisKey(String sessionId) {
+		return "reservation:" + sessionId;
+	}	
+	// centralized function to create Redis backup key
+	public String generateRedisBackupKey(String sessionId) {
+		return "backup:" + sessionId;
+	}
+	// centralized Redis get hash Value
+	public String getHashValue (String key, String field) {
+		return (String) redisTemplate.opsForHash().get(key, field);
+	}	
+	
 	//get paymentIntend Id for stripe
-	public String getPaymentIntentId(String sessionId) {
-		String key = "reservation:" + sessionId;
-		String id = (String) redisTemplate.opsForHash().get(key, "paymentIntentId");	
+	public String getPaymentIntentId(String sessionId) {		
+		String id = getHashValue(generateRedisKey(sessionId), "paymentIntentId");	
 		if (id == null) {
-			throw new IllegalArgumentException("Session data not found or expired.");
+			throw new IllegalArgumentException(SESSION_NOT_FOUND);
 		}
 		return id;
 	}
 	
 	public void setStatusToConfirming(String sessionId) {
-		String key = "reservation:" + sessionId;
-		String bookingStatus = (String) redisTemplate.opsForHash().get(key, "bookingStatus");
+		String bookingStatus = (String) redisTemplate.opsForHash().get(generateRedisKey(sessionId), "bookingStatus");
 		if(!bookingStatus.equals("HOLDING") || bookingStatus == null) {
-			  throw new IllegalStateException("Reservation is not in a valid state for confirmation.");
+			  throw new IllegalStateException(INVALID_RESERVATION_STATE);
 		}
-		redisTemplate.opsForHash().put(key, "bookingStatus", "CONFIRMING");
+		redisTemplate.opsForHash().put(generateRedisKey(sessionId), "bookingStatus", "CONFIRMING");
 	}
 	public void deleteKey(String sessionId) {
-		String key = "reservation:" + sessionId;
-		redisTemplate.delete(key);
+		redisTemplate.delete(generateRedisKey(sessionId));
 	}
 		
-	public Long getRemainingTTL(String sessionId) {
-		String key = "reservation:" + sessionId;
-		return redisTemplate.getExpire(key);
+	public Long getRemainingTTL(String sessionId) {		
+		return redisTemplate.getExpire(generateRedisKey(sessionId));
 	}
 	
 	//logout

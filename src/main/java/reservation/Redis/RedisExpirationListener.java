@@ -2,22 +2,22 @@ package reservation.Redis;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.Message;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 import com.stripe.exception.StripeException;
 
+import reservation.Service.RedisService;
 import reservation.Service.SlotService;
 import reservation.Service.StripeService;
 
 @Component
 public class RedisExpirationListener extends KeyExpirationEventMessageListener {	
 	@Autowired
-	private SlotService slotService;
-	@Autowired
-	private RedisTemplate<String, Object> redisTemplate;
+	private SlotService slotService;	
+	@Autowired 
+	private RedisService redisService;	
 	@Autowired
 	private StripeService stripeService;
 
@@ -32,21 +32,26 @@ public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 			String expiredKey = new String(message.getBody());
 			System.out.println("expired message: " + message);
 			System.out.println("expiredKey" + expiredKey);
-
+			
+			// get sessionId from expired Redis key
 			if (expiredKey.startsWith("reservation:") && expiredKey.split(":").length == 2) {
 				String[] keyItems = expiredKey.split(":");
 				String sessionId = keyItems[1];
-
-				String backupKey = "backup:" + sessionId;
-
-				String slotIdString = (String) redisTemplate.opsForHash().get(backupKey, "slotId");
 				
-				String paymentIntentId = (String) redisTemplate.opsForHash().get(backupKey, "paymentIntentId");
+				// use sessionId to generate again the backup key
+				String backupKey = redisService.generateRedisBackupKey(sessionId);
+				
+				// get slotId and paymentIntentID from the key, String type values 
+				String slotIdString = redisService.getHashValue(backupKey, "slotId");				
+				String paymentIntentId = redisService.getHashValue(backupKey, "paymentIntentId");
+				
+				// parse slotId from String to Long, then change slot status from Holding to Available
 				if (slotIdString != null) {
 					System.out.println("slotIdString" + slotIdString);
 					Long slotId = Long.parseLong(slotIdString);
 					slotService.markSlotHoldingToAvailable(slotId);
 				}
+				// timeout, so cancel the paymentIntent from Stripe
 				if (paymentIntentId != null) {
 					stripeService.cancelPaymentIntent(paymentIntentId, "duplicate");
 				}

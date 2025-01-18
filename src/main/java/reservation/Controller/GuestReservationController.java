@@ -85,8 +85,8 @@ public class GuestReservationController extends BaseController{
 	@PostMapping("/user/reservation/create-payment")
 	public ResponseEntity<Object> createPayment(@RequestParam String sessionId, Principal principal) {
 		System.out.println("sessionId payment: " + sessionId);
-		String key = "reservation:" + sessionId;
-		String backupKey = "backup:" + sessionId;
+		String key = redisService.generateRedisKey(sessionId);
+		String backupKey = redisService.generateRedisBackupKey(sessionId);
 
 		// accessToken, check principal == null 
 		checkPrincipal(principal, "You must be logged in to retrieve your booking.");
@@ -208,8 +208,8 @@ public class GuestReservationController extends BaseController{
 
 	@DeleteMapping("/reservation/delete-redis-key")
 	ResponseEntity<Object> getUserReservation(@RequestParam(required = true) String sessionId) throws StripeException {
-		String existingKey = "reservation:" + sessionId;
-		String existingBackupKey = "backup:" + sessionId;
+		String existingKey = redisService.generateRedisKey(sessionId);
+		String existingBackupKey = redisService.generateRedisBackupKey(sessionId);
 
 		// by default, field key is object
 		Map<Object, Object> rawData = redisTemplate.opsForHash().entries(existingKey);
