@@ -26,9 +26,12 @@ public class SeatService {
 	}
 
 	public List<SeatReservationCountDTO> countTotalReservationsPerSeat(){
+		// return result can not map from Object[] to List<>
 		List<Object[]> results = seatRepository.countTotalReservationsPerSeat();
 		List<SeatReservationCountDTO> list = new ArrayList<>();
 		
+		// Manually map the Object[] to List<SeatReservationCountDTO>
+		// slotId [0], tableName [1], reservationCount[2]
 		for(Object[] row : results){			
 			SeatReservationCountDTO dto =  new SeatReservationCountDTO
 					(		

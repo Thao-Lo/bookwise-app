@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import reservation.Entity.Schedule;
 import reservation.Entity.Seat;
 import reservation.Entity.Slot;
+import reservation.Entity.Slot.Status;
 import reservation.Repository.ScheduleRepository;
 import reservation.Repository.SeatRepository;
 import reservation.Repository.SlotRepository;
@@ -36,51 +37,53 @@ public class SlotService {
 
 	@Autowired
 	TimeZoneConverter timeZoneConverter;
+	
+	private final Slot.Status AVAILABLE = Slot.Status.AVAILABLE;
+	private final Slot.Status HOLDING = Slot.Status.HOLDING;
 
 	public Page<Slot> getAllSlots(int page, int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		return slotRepository.findAll(pageable);
 	}
-	
+
 	public void markSlotHoldingToAvailable(Long slotId) {
-		Slot slot = slotRepository.findById(slotId).orElse(null);
-		if (slot != null && slot.getStatus() == Slot.Status.HOLDING) {
-			slot.setStatus(Slot.Status.AVAILABLE);
+		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
+		if (slot != null && slot.getStatus() == HOLDING) {
+			slot.setStatus(AVAILABLE);
 			slotRepository.save(slot);
 		}
 	}
+
 	public void markSlotHolding(Long slotId) {
 		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
-		if (slot != null && slot.getStatus() == Slot.Status.AVAILABLE) {
-			slot.setStatus(Slot.Status.HOLDING);
+		if (slot != null && slot.getStatus() == AVAILABLE) {
+			slot.setStatus(HOLDING);
 			slotRepository.save(slot);
-		} else {
-			throw new IllegalArgumentException("Slot is not available for booking");
+			return;
 		}
+		throw new IllegalArgumentException("Slot is not available for booking");
 	}
-	
+
 	public void generateSlots() {
 		LocalDateTime datetime = LocalDateTime.now();
 		List<Schedule> schedules = scheduleRepository.getAllDatetimeAfterToday(datetime);
 		List<Seat> seats = seatRepository.findAll();
 		List<Slot> slots = new ArrayList<>();
-		
-		//only get the existing slots in db
+
+		// only get the existing slots in db
 		List<Slot> existingSlots = slotRepository.existingSlots(schedules, seats);
-		//from existing slot, create key for each slots and store in set
-		Set<String> existingSlotKeys = existingSlots.stream().map(
-				 slot -> slot.getSchedule().getId() + "_" + slot.getSeat().getId()
-				 ).collect(Collectors.toSet());
-				
-		
+		// from existing slot, create key for each slots and store in set
+		Set<String> existingSlotKeys = existingSlots.stream()
+				.map(slot -> slot.getSchedule().getId() + "_" + slot.getSeat().getId()).collect(Collectors.toSet());
+
 		for (Schedule schedule : schedules) {
-			for (Seat seat : seats) {				
-				String key = schedule.getId() + "_" + seat.getId(); //create compare key with key in SET O1
+			for (Seat seat : seats) {
+				String key = schedule.getId() + "_" + seat.getId(); // create compare key with key in SET O1
 				if (!existingSlotKeys.contains(key)) {
 					Slot slot = new Slot();
 					slot.setSeat(seat);
 					slot.setSchedule(schedule);
-					slot.setStatus(Slot.Status.AVAILABLE);
+					slot.setStatus(AVAILABLE);
 					slots.add(slot);
 				}
 			}
@@ -95,9 +98,7 @@ public class SlotService {
 	public List<Slot> getSlotsbySeatCapacity(int capacity) {
 		return slotRepository.getSlotsBySeatCapacity(capacity);
 	}
-	
-	
-	
+
 	public List<Slot> getSlots(Integer capacity, LocalDate date, LocalTime time) {
 
 		int[] capacities = { 2, 4, 6 };
