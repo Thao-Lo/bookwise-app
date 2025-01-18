@@ -1,6 +1,5 @@
 package reservation.Controller;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -21,22 +20,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.constraints.Min;
 import reservation.DTO.ReservationDTO;
 import reservation.DTO.ScheduleResponse;
 import reservation.DTO.SeatReservationCountDTO;
 import reservation.DTO.SlotResponse;
 import reservation.Entity.GuestReservation;
-import reservation.Entity.GuestReservation.Status;
 import reservation.Entity.Schedule;
 import reservation.Entity.Seat;
 import reservation.Entity.Slot;
-import reservation.Entity.User;
-import reservation.Entity.User.Role;
-import reservation.Service.GuestReservationService;
 import reservation.Service.ScheduleService;
 import reservation.Service.SeatService;
-import reservation.Service.SlotService;
-import reservation.Utils.TimeZoneConverter;
+
 
 @RestController
 @RequestMapping("api/v1/admin/")
@@ -51,8 +46,8 @@ public class AdminManagementController extends BaseController {
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/seats")
-	public ResponseEntity<Object> getAllSeats(@RequestParam(required = false, defaultValue = "0") int page,
-			@RequestParam(required = false, defaultValue = "10") int size) {
+	public ResponseEntity<Object> getAllSeats(@RequestParam(defaultValue = "0") @Min(0) int page,
+			@RequestParam(defaultValue = "10") @Min(10) int size) {
 		Page<Seat> seats = seatService.getAllSeat(page, size);
 		// from Base Controller
 		checkPageNotEmpty(seats, "No seats found");
@@ -76,8 +71,8 @@ public class AdminManagementController extends BaseController {
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/dates")
-	public ResponseEntity<Object> getAllDates(@RequestParam(required = false, defaultValue = "0") int page,
-			@RequestParam(required = false, defaultValue = "10") int size) {
+	public ResponseEntity<Object> getAllDates(@RequestParam(defaultValue = "0") @Min(0) int page,
+			@RequestParam(defaultValue = "10") @Min(10) int size) {
 		Page<Schedule> schedulesPage = scheduleService.getAllDates(page, size);
 		// from Base Controller
 		checkPageNotEmpty(schedulesPage, "No Dates found");
@@ -96,8 +91,8 @@ public class AdminManagementController extends BaseController {
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/slots")
-	public ResponseEntity<Object> getAllSlots(@RequestParam(required = false, defaultValue = "0") int page,
-			@RequestParam(required = false, defaultValue = "10") int size) {
+	public ResponseEntity<Object> getAllSlots(@RequestParam(defaultValue = "0") @Min(0) int page,
+			@RequestParam(defaultValue = "10") @Min(10) int size) {
 		Page<Slot> slotsPage = slotService.getAllSlots(page, size);
 		// from Base Controller
 		checkPageNotEmpty(slotsPage, "No Slots found");
@@ -119,8 +114,8 @@ public class AdminManagementController extends BaseController {
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/reservations")
-	public ResponseEntity<Object> getAllReservations(@RequestParam(required = false, defaultValue = "0") int page,
-			@RequestParam(required = false, defaultValue = "10") int size) {
+	public ResponseEntity<Object> getAllReservations(@RequestParam(defaultValue = "0") @Min(0) int page,
+			@RequestParam(defaultValue = "10") @Min(10) int size) {
 		// sort by slot_id to show dates far away 1st
 		Pageable pageable = PageRequest.of(page, size, Sort.by("slot.id").descending());
 		

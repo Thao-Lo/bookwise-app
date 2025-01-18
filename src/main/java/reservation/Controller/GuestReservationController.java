@@ -24,6 +24,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 
+import jakarta.validation.constraints.Min;
 import reservation.DTO.ReservationDTO;
 import reservation.Entity.GuestReservation;
 import reservation.Entity.User;
@@ -50,7 +51,7 @@ public class GuestReservationController extends BaseController{
 		String slotKey = "slot:" + reservationDTO.getId();
 
 		boolean isSlotLock = guestReservationService.isSlotReserve(slotKey);
-
+		
 		if (!isSlotLock) {
 			return new ResponseEntity<>(Map.of("message", "Slot is already being held by another user."),
 					HttpStatus.CONFLICT);
@@ -180,14 +181,9 @@ public class GuestReservationController extends BaseController{
 	@PreAuthorize("hasRole('GUEST')")
 	@GetMapping("/user/reservation-list")
 	ResponseEntity<Object> getUserReservation(@RequestParam(required = true) Long userId,
-			@RequestParam(required = false, defaultValue = "0") Integer page,
-			@RequestParam(required = false, defaultValue = "5") Integer size) {
-		if (page == null || page < 0) {
-			page = 0;
-		}
-		if (size == null || size < 1) {
-			size = 5;
-		}
+			@RequestParam(defaultValue = "0") @Min(0) Integer page,
+			@RequestParam(defaultValue = "10") @Min(10) Integer size) {
+	
 		Page<GuestReservation> reservations = guestReservationService.getReservationByUserId(page, size, userId);
 		System.out.println(reservations.getTotalElements());
 		System.out.println(reservations.getTotalPages());

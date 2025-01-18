@@ -1,13 +1,11 @@
 package reservation.Controller;
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,10 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.constraints.Min;
 import reservation.DTO.UserResponse;
 import reservation.Entity.User;
 import reservation.Entity.User.Role;
-import reservation.Service.UserService;
+
 
 @RestController
 @RequestMapping("api/v1/admin/user")
@@ -29,8 +28,8 @@ public class AdminUserController extends BaseController {
 	@GetMapping("/list")
 	public ResponseEntity<Object> getUserList(Principal principal,
 			@RequestParam(required = false, defaultValue = "false") boolean pageable,
-			@RequestParam(required = false, defaultValue = "0") int page,
-			@RequestParam(required = false, defaultValue = "10") int size) {
+			@RequestParam(defaultValue = "0") @Min(0) int page,
+			@RequestParam(defaultValue = "10") @Min(10) int size) {
 		
 		checkPrincipal(principal, "Not authorized." );
 		
@@ -58,16 +57,6 @@ public class AdminUserController extends BaseController {
 		}
 		List<User> users = userService.showAllUsers();
 		checkListNotEmpty(users,"No users found.");
-		
-//		List<UserResponse> userList = new ArrayList<>();
-//		for (User user : users) {
-//			UserResponse userResponse = new UserResponse();
-//			userResponse.setId(user.getId());
-//			userResponse.setUsername(user.getUsername());
-//			userResponse.setEmail(user.getEmail());
-//			userResponse.setRole(user.getRole().name());
-//			userList.add(userResponse);
-//		}
 		
 		List<UserResponse> userList = users.stream().map(
 				user -> {
