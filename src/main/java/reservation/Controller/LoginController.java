@@ -4,6 +4,8 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +25,13 @@ import reservation.DTO.LoginRequest;
 import reservation.DTO.UserResponse;
 import reservation.Entity.User;
 import reservation.Service.JwtService;
-import reservation.Service.RedisService;
-import reservation.Service.UserService;
 import reservation.Utils.JwtUtil;
 
 @RestController
 @RequestMapping("/api/v1")
 public class LoginController extends BaseController{
+	private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
+	
 	@Autowired
 	JwtUtil jwtUtil;	
 	@Autowired
@@ -45,10 +47,9 @@ public class LoginController extends BaseController{
 			return new ResponseEntity<>(Map.of("error", "Invalid Username or Email."), HttpStatus.BAD_REQUEST);
 		}
 		if (!userService.isEmailVerified(user.getId())) {
-			return new ResponseEntity<>(Map.of("error", "Email not verified.Please Verified your email before login."),
+			return new ResponseEntity<>(Map.of("error", "Email not verified. Please Verified your email before login."),
 					HttpStatus.BAD_REQUEST);
-		}
-		System.out.println("Login password: " + request.getPassword());
+		}		
 		System.out.println("Password in DB (hashed): " + user.getPassword());
 		System.out.println("Password matches: " + passwordEncoder.matches(request.getPassword(), user.getPassword()));
 
