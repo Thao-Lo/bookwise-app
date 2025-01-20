@@ -40,28 +40,33 @@ public class LoginController extends BaseController{
 	JwtService jwtService;
 
 	@PostMapping("/login")
-	public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {
+	public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {		
 		// from user input either username or email
 		User user = userService.findUserByUsernameOrEmail(request.getUsernameOrEmail());
+		logger.debug("Login request receive for username/email: {}", request.getUsernameOrEmail());
 		if (user == null) {
+			logger.warn("Loggin failed: User not found for username/email: {}",request.getUsernameOrEmail() );
 			return new ResponseEntity<>(Map.of("error", "Invalid Username or Email."), HttpStatus.BAD_REQUEST);
 		}
 		if (!userService.isEmailVerified(user.getId())) {
+			logger.warn("Login failed: Email not verified for user Id: {}", user.getId());
 			return new ResponseEntity<>(Map.of("error", "Email not verified. Please Verified your email before login."),
 					HttpStatus.BAD_REQUEST);
 		}		
-		System.out.println("Password in DB (hashed): " + user.getPassword());
-		System.out.println("Password matches: " + passwordEncoder.matches(request.getPassword(), user.getPassword()));
+		
+		logger.debug("Password matches: {} ", passwordEncoder.matches(request.getPassword(), user.getPassword()));
 
 		// compare raw password with hashed password in db -> matches
 		// BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+			logger.warn("Login failed: Incorrect password for user ID: {}", user.getId());
 			return new ResponseEntity<>(Map.of("error", "Incorrect password."), HttpStatus.BAD_REQUEST);
 		}
+		logger.info("User logged in successfully: {}", user.getUsername());
 		//generate Tokens, store username and role in token
 		String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole().toString());
 		String refreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getRole().toString());
-
+		logger.debug("Generate tokens for user Id: {}", user.getId());
 		Map<String, Object> response = new HashMap<>();
 		response.put("message", "Login successfully.");
 		response.put("accessToken", accessToken);
