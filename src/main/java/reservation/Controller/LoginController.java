@@ -30,6 +30,7 @@ import reservation.Utils.JwtUtil;
 @RestController
 @RequestMapping("/api/v1")
 public class LoginController extends BaseController{
+	//SLF4J
 	private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 	
 	@Autowired
@@ -40,7 +41,7 @@ public class LoginController extends BaseController{
 	JwtService jwtService;
 
 	@PostMapping("/login")
-	public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {		
+	public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {	
 		// from user input either username or email
 		User user = userService.findUserByUsernameOrEmail(request.getUsernameOrEmail());
 		logger.debug("Login request receive for username/email: {}", request.getUsernameOrEmail());
