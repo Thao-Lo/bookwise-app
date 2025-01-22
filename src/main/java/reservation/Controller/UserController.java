@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,9 @@ import reservation.Service.UserService;
 @RestController
 @RequestMapping("/api/v1")
 public class UserController {
+	//SLF4J
+	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+	
 	@Autowired
 	UserService userService;
 	@Autowired
@@ -35,14 +40,14 @@ public class UserController {
 	PasswordEncoder passwordEncoder;
 	
 	@GetMapping("/")
-	public ResponseEntity<Object> getHomePage(){
+	public ResponseEntity<Object> getHomePage(){	
 		return new ResponseEntity<>(Map.of("message", "Welcome to Zavis booking management system"),HttpStatus.OK);
 	}
 
 	@PostMapping("/register")
 	public ResponseEntity<Object> registerNewUser(@Valid @RequestBody RegisterRequest request) {
-
-		if (userService.isUsernameExist(request.getUsername())) {
+		
+		if (userService.isUsernameExist(request.getUsername())) {			
 			return new ResponseEntity<>(Map.of("error","Username is already existed."), HttpStatus.CONFLICT);
 		}
 		if (userService.isEmailExist(request.getEmail())) {
@@ -52,11 +57,10 @@ public class UserController {
 		if (!request.getPassword().equals(request.getConfirmPassword())) {
 			return new ResponseEntity<>(Map.of("error","Passwords are not matched"), HttpStatus.BAD_REQUEST);
 		}
-		System.out.println("register password: " + request.getPassword());
-		System.out.println("Hashed password (register): " + passwordEncoder.encode(request.getPassword()));
+		logger.info("Register: valid inputs received for username: {}", request.getUsername());		
 		
 		String verificationCode = userService.generateVerificationCode();
-
+		
 		// save to db
 		User user = new User();
 		user.setUsername(request.getUsername());
@@ -67,9 +71,11 @@ public class UserController {
 		user.setEmailVerified(false);
 		user.setCodeExpirationTime(LocalDateTime.now().plusHours(1));
 		userService.saveUser(user);
-
+		logger.debug("Register: store new user details to database for user: {}", request.getUsername());
+		
 		emailService.sendVerificationEmail(request.getEmail(), verificationCode);
-
+		logger.info("Register: send UUID code to: {}", request.getEmail());
+		
 		return new ResponseEntity<>(Map.of("message","User Register successfully. Please check your email to verify your account."), HttpStatus.CREATED);
 	}
 
@@ -90,6 +96,7 @@ public class UserController {
 		user.setVerificationCode(null);
 		user.setCodeExpirationTime(null);
 		userService.saveUser(user);
+		logger.info("Verify Email: successfully verified email for user: {}", user.getUsername());
 		return new ResponseEntity<>(Map.of("message","Email verified successfully"), HttpStatus.OK);
 	}
 
