@@ -77,6 +77,15 @@ public class User {
 
 	public enum Role {
 		GUEST, ADMIN}
+
+	// for Unit test
+	public User(String username, String email) {
+		super();
+		this.username = username;
+		this.email = email;
+	}
+	
+	
 	
 //	public enum Role {
 //		GUEST("guest"), ADMIN("admin");
