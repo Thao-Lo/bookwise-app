@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -43,14 +45,14 @@ public class GuestReservationController extends BaseController{
 	private StripeService stripeService;
 
 	final int PRICE_PER_CAPACITY = 50;
+	private final static Logger logger = LoggerFactory.getLogger(GuestReservationController.class);
 
 	private static final long TTL = 300; // Time to live 5 mins
 
 	@PostMapping("reservation/create")
 	public ResponseEntity<Object> createReservation(@RequestBody ReservationDTO reservationDTO) {
-		String slotKey = "slot:" + reservationDTO.getId();
-
-		boolean isSlotLock = guestReservationService.isSlotReserve(slotKey);
+		// Use Reddison to lock the slot if it is not reserved 
+		boolean isSlotLock = guestReservationService.isSlotReserve(reservationDTO.getId());
 		
 		if (!isSlotLock) {
 			return new ResponseEntity<>(Map.of("message", "Slot is already being held by another user."),
@@ -60,8 +62,8 @@ public class GuestReservationController extends BaseController{
 		slotService.markSlotHolding(reservationDTO.getId());
 
 		String sessionId = redisService.saveReservation(reservationDTO);
-
-		System.out.println("reservation DTO" + reservationDTO);
+		logger.info("Create reservation: user Redis to lock reservation for 5 mins {}", reservationDTO);	
+		
 		return new ResponseEntity<>(
 				Map.of("message", "Reservation is on hold", "sessionId", sessionId, "remainingTime", TTL),
 				HttpStatus.OK);
@@ -73,10 +75,10 @@ public class GuestReservationController extends BaseController{
 		// accessToken, check principal == null 
 		checkPrincipal(principal, "You must be logged in to retrieve your booking.");
 		
-		System.out.println("principal name: " + principal.getName());
 		ReservationDTO reservationDTO = (ReservationDTO) redisService.getReservation(sessionId).get("reservation");
 		String status = (String) redisService.getReservation(sessionId).get("status");
 
+		logger.info("Retrieve: retrieve reservation infomation for user: {}", principal.getName());
 		return new ResponseEntity<>(Map.of("reservation", reservationDTO, "remainingTime",
 				redisService.getRemainingTTL(sessionId), "status", status), HttpStatus.OK);
 	}
@@ -85,7 +87,7 @@ public class GuestReservationController extends BaseController{
 	@PreAuthorize("hasRole('GUEST')")
 	@PostMapping("/user/reservation/create-payment")
 	public ResponseEntity<Object> createPayment(@RequestParam String sessionId, Principal principal) {
-		System.out.println("sessionId payment: " + sessionId);
+		logger.info("Create Payment: create Stripe payment for sessionId: {}", sessionId);		
 		String key = redisService.generateRedisKey(sessionId);
 		String backupKey = redisService.generateRedisBackupKey(sessionId);
 
@@ -98,6 +100,7 @@ public class GuestReservationController extends BaseController{
 		Map<String, Object> reservationData = redisService.getReservation(sessionId);
 
 		if (reservationData == null || !reservationData.containsKey("reservation")) {
+			logger.warn("Create Payment: Cannot create payment because Redis session not found or expired.");
 			return new ResponseEntity<>(Map.of("error", "Session not found or expired"), HttpStatus.BAD_REQUEST);
 		}
 		try {
@@ -112,7 +115,7 @@ public class GuestReservationController extends BaseController{
 			redisTemplate.opsForHash().put(key, "paymentIntentId", paymentIntent.getId());
 			redisTemplate.opsForHash().put(backupKey, "paymentIntentId", paymentIntent.getId());
 
-			System.out.println("paymentIntentId" + paymentIntent.getId());
+			logger.info("Create Payment: create Stripe payment with paymentIntentId: {}", paymentIntent.getId());			
 
 			return new ResponseEntity<>(Map.of("clientSecret", paymentIntent.getClientSecret(), "message",
 					"Please complete your payment to confirm your booking.", "paymentIntentId", paymentIntent.getId()),
@@ -158,7 +161,7 @@ public class GuestReservationController extends BaseController{
 					reservationDTO.getCapacity());
 
 			// change status from HOLDING to CONFIRMING
-			redisService.setStatusToConfirming(sessionId);
+			redisService.setStatusToConfirming(sessionId);			
 
 			// send confirmation Email
 			GuestReservation reservation = guestReservationService.findReservationBySlotId(reservationDTO.getId());
@@ -166,7 +169,8 @@ public class GuestReservationController extends BaseController{
 			redisService.deleteKey(sessionId);
 			redisTemplate.delete("backup:" + sessionId);
 			guestReservationService.releaseRedissonLock(reservationDTO.getId());
-
+			
+			logger.info("Confirm Reservation: payment successfully, send confirmation email to: {}", reservation.getUser().getEmail());
 			return new ResponseEntity<>(
 					Map.of("message", "Your booking is completed. Please check your email for booking confirmation"),
 					HttpStatus.OK);
@@ -226,6 +230,7 @@ public class GuestReservationController extends BaseController{
 			guestReservationService.releaseRedissonLock(slotId);
 			slotService.markSlotHoldingToAvailable(slotId);
 			stripeService.cancelPaymentIntent((String) reservationData.get("paymentIntentId"), "duplicate");
+			logger.info("Change reservation: delete Redis key, release Reddison lock and cancel payment intent for nonprocessing reservation.");
 		} catch (Exception e) {
 			return new ResponseEntity<>(Map.of("error", "Failed to perform Redis clean up", "details", e.getMessage()),
 					HttpStatus.INTERNAL_SERVER_ERROR);
