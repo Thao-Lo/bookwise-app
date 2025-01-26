@@ -4,6 +4,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +34,7 @@ public class GuestReservationService {
 
 	@Autowired
 	private RedissonClient redissonClient;
+	private final static Logger logger = LoggerFactory.getLogger(GuestReservationService.class);
 
 	public Page<GuestReservation> getAllReservation(Pageable pageable) {
 //		Pageable pageable = PageRequest.of(page, size);
@@ -43,24 +46,25 @@ public class GuestReservationService {
 		return guestReservationRepository.findByUserId(pageable, userId);
 	}
 
-	public boolean isSlotReserve(String slotKey) {
+	public boolean isSlotReserve(Long slotId) {
+		String slotKey = "slot:" + slotId;
 		String lockKey = "lock:" + slotKey;
 		RLock lock = redissonClient.getLock(lockKey);
 		try {
 			// if (lock.tryLock(10, 30, TimeUnit.SECONDS)) expired after 30 sec
 			if (lock.tryLock(10, TimeUnit.SECONDS)) {
 				// LockWatchdog will automatically renew the lease time (default is 30 seconds)
-				System.out.println("Slot reserved for: " + slotKey);
+				logger.info("Reddison: Slot reserved for: {}", slotKey);			
 				return true;
 
 			} else {
-				System.out.println("Failed to acquire lock for slot " + slotKey);
+				logger.warn("Reddison: Failed to acquire lock for slot: {}", slotKey);					
 				return false;
 			}
 
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			System.out.println("Thread interrupted while waiting for lock: " + lockKey);
+			logger.warn("Reddison: Thread interrupted while waiting for lock: ", lockKey);			
 			return false;
 		} finally {
 			if (lock.isHeldByCurrentThread()) {
@@ -68,7 +72,7 @@ public class GuestReservationService {
 			}
 		}
 	}
-
+	
 	public void releaseRedissonLock(Long slotId) {
 		String lockKey = "lock:" + "slot:" + slotId;
 		RLock lock = redissonClient.getLock(lockKey);
