@@ -31,6 +31,12 @@
 		<java.version>17</java.version>
 	</properties>
 	<dependencies>
+		<!-- Aws Java SDK for Amazon S3 -->
+		<dependency>
+   			 <groupId>com.amazonaws</groupId>
+   			 <artifactId>aws-java-sdk-s3</artifactId>
+   			 <version>1.12.783</version>
+		</dependency>
 		<!-- Jps repository -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
