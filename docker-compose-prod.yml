@@ -1,8 +1,6 @@
 services: 
   springboot-app:
-    build: 
-      context: .
-      image: thaolo/bookwise-app:latest
+    image: thaolo/bookwise-app:latest      
     ports: 
       - "8080:8080"
     volumes:
