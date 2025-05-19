@@ -8,7 +8,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    restart: always
 
   redis: 
    image: redis:7   
