@@ -1,4 +1,4 @@
-CREATE TABLE `reservation_management`.`users` (
+CREATE TABLE `users` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(50) NOT NULL,
   `email` VARCHAR(100) NOT NULL,
@@ -12,18 +12,18 @@ CREATE TABLE `reservation_management`.`users` (
   UNIQUE INDEX `username_UNIQUE` (`username` ASC) VISIBLE,
   UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE);
 
-  CREATE TABLE `reservation_management`.`seats` (
+  CREATE TABLE `seats` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `seat_name` VARCHAR(45) NOT NULL,
   `capacity` INT NOT NULL,
   PRIMARY KEY (`id`));
   
-  CREATE TABLE `reservation_management`.`dates` (
+  CREATE TABLE `dates` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `datetime` DATETIME NOT NULL,
   PRIMARY KEY (`id`));
 
-  CREATE TABLE `reservation_management`.`slots` (
+  CREATE TABLE `slots` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `date_id` BIGINT NOT NULL,
   `seat_id` INT NOT NULL,
@@ -31,17 +31,17 @@ CREATE TABLE `reservation_management`.`users` (
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_date_id`
     FOREIGN KEY (`date_id`)
-    REFERENCES `reservation_management`.`dates` (`id`)
+    REFERENCES `bookwise`.`dates` (`id`)
     ON DELETE CASCADE
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_seat_id`
     FOREIGN KEY (`seat_id`)
-    REFERENCES `reservation_management`.`seats` (`id`)
+    REFERENCES `bookwise`.`seats` (`id`)
     ON DELETE CASCADE
     ON UPDATE NO ACTION
 );
 
-CREATE TABLE `reservation_management`.`guest_reservation` (
+CREATE TABLE `guest_reservation` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT NOT NULL,
   `slot_id` BIGINT NOT NULL,
@@ -51,11 +51,11 @@ CREATE TABLE `reservation_management`.`guest_reservation` (
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_user_id`
     FOREIGN KEY (`user_id`)
-    REFERENCES `reservation_management`.`users` (`id`)
+    REFERENCES `bookwise`.`users` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_slot_id`
     FOREIGN KEY (`slot_id`)
-    REFERENCES `reservation_management`.`slots` (`id`)
+    REFERENCES `bookwise`.`slots` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE);
