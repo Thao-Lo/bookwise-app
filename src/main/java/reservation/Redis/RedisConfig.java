@@ -10,7 +10,7 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-@DependsOn("startRedisServer")
+//@DependsOn("startRedisServer")
 public class RedisConfig {
 	 // must have return method for bean
 	@Bean
@@ -43,5 +43,6 @@ public class RedisConfig {
 		RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 		container.setConnectionFactory(redisConnectionFactory);
 		return container;
-	}
+	}	
+	
 }
