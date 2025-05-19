@@ -35,7 +35,7 @@ import reservation.Service.SeatService;
 
 @RestController
 @RequestMapping("api/v1/admin/")
-@DependsOn("startRedisServer")
+//@DependsOn("startRedisServer")
 //@DependsOn("redissonClient")
 public class AdminManagementController extends BaseController {
 	@Autowired
@@ -78,7 +78,7 @@ public class AdminManagementController extends BaseController {
 		checkPageNotEmpty(schedulesPage, "No Dates found");
 
 		List<ScheduleResponse> scheduleResponses = schedulesPage.getContent().stream().map(schedule -> {
-			LocalDateTime datetime = timeZoneConverter.convertToLocalTime(schedule.getDatetime(), "Australia/Sydney");
+			LocalDateTime datetime = schedule.getDatetime();
 			ScheduleResponse scheduleResponse = new ScheduleResponse();
 			scheduleResponse.setId(schedule.getId());
 			scheduleResponse.setDate(datetime.toLocalDate());
@@ -98,8 +98,7 @@ public class AdminManagementController extends BaseController {
 		checkPageNotEmpty(slotsPage, "No Slots found");
 
 		List<SlotResponse> SlotResponses = slotsPage.getContent().stream().map(slot -> {
-			LocalDateTime datetime = timeZoneConverter.convertToLocalTime(slot.getSchedule().getDatetime(),
-					"Australia/Sydney");
+			LocalDateTime datetime = slot.getSchedule().getDatetime();
 			SlotResponse slotResponse = new SlotResponse();
 			slotResponse.setId(slot.getId());
 			slotResponse.setTableName(slot.getSeat().getSeatName());
@@ -124,8 +123,7 @@ public class AdminManagementController extends BaseController {
 		checkPageNotEmpty(reservationsPage, "No Reservations found");
 
 		List<ReservationDTO> reservationResponses = reservationsPage.getContent().stream().map(reservation -> {
-			LocalDateTime datetime = timeZoneConverter
-					.convertToLocalTime(reservation.getSlot().getSchedule().getDatetime(), "Australia/Sydney");
+			LocalDateTime datetime = reservation.getSlot().getSchedule().getDatetime();
 			ReservationDTO reservationResponse = new ReservationDTO();
 			reservationResponse.setId(reservation.getId());
 			reservationResponse.setTableName(reservation.getSlot().getSeat().getSeatName());

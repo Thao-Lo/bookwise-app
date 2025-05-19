@@ -196,8 +196,7 @@ public class GuestReservationController extends BaseController{
 			return new ResponseEntity<>(Map.of("error", "You have no reservation yet"), HttpStatus.BAD_REQUEST);
 		}
 		List<ReservationDTO> reservationDTOs = reservations.stream().map(reservation -> {
-			LocalDateTime localDatetime = timeZoneConverter
-					.convertToLocalTime(reservation.getSlot().getSchedule().getDatetime(), "Australia/Sydney");
+			LocalDateTime localDatetime = reservation.getSlot().getSchedule().getDatetime();
 			return new ReservationDTO(reservation.getId(), reservation.getSlot().getSeat().getSeatName(),
 					reservation.getNumberOfGuests(), localDatetime.toLocalDate(), localDatetime.toLocalTime(),
 					reservation.getStatus().name());

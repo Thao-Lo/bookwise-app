@@ -131,9 +131,9 @@ public class SlotService {
 			List<Slot> availableSlots = new ArrayList<>();
 
 			for (LocalDate searchDate : dates) {
-				LocalTime utcTime = timeZoneConverter.convertTimeToUTC(searchDate, time, "Australia/Sydney");
-				System.out.println("UTC time for date " + searchDate + ": " + utcTime);
-				LocalDateTime localDateTime = LocalDateTime.of(searchDate, utcTime);
+//				LocalTime utcTime = timeZoneConverter.convertTimeToUTC(searchDate, time, "Australia/Sydney");
+//				System.out.println("UTC time for date " + searchDate + ": " + utcTime);
+				LocalDateTime localDateTime = LocalDateTime.of(searchDate, time);
 				List<Slot> slots = slotRepository.getSlotBySeatCapacityAndTime(capacity, localDateTime);
 				if (slots != null) {
 					availableSlots.addAll(slots);
@@ -144,9 +144,9 @@ public class SlotService {
 		}
 		// Case 4: All parameters are provided
 		if (date != null && time != null) {
-			LocalTime utcTime = timeZoneConverter.convertTimeToUTC(date, time, "Australia/Sydney");
-			System.out.println("Converted time to UTC: " + utcTime);
-			return slotRepository.getSlotsBySeatCapacityAndDateAndTime(capacity, date, utcTime);
+//			LocalTime utcTime = timeZoneConverter.convertTimeToUTC(date, time, "Australia/Sydney");
+//			System.out.println("Converted time to UTC: " + utcTime);
+			return slotRepository.getSlotsBySeatCapacityAndDateAndTime(capacity, date, time);
 		}
 
 		// Fallback (should not occur)

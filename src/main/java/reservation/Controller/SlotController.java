@@ -48,7 +48,7 @@ public class SlotController {
 	
 				List<SlotResponse> avaialbeSlots = slots.stream()
 				.map(slot -> {
-						LocalDateTime localDateTime = timeZoneConverter.convertToLocalTime(slot.getSchedule().getDatetime(), "Australia/Sydney");
+						LocalDateTime localDateTime = slot.getSchedule().getDatetime();
 						return new SlotResponse(
 						slot.getId(),
 						slot.getSeat().getSeatName(),
@@ -65,25 +65,3 @@ public class SlotController {
 	}	
 }
 
-
-//@GetMapping("/slot/{capacity}")
-//public ResponseEntity<Object> getSlotByCapacity(@PathVariable @Positive int capacity) {		
-//	List<Slot> slots = slotService.getSlotsbySeatCapacity(capacity);
-//	if(slots.isEmpty()) {
-//		return new ResponseEntity<>(Map.of("error", "No slots available for the given capacity"), HttpStatus.NOT_FOUND);
-//	}
-////	List<Map<String, Object>> avaialbeSlots = slots.stream()   .map(slot -> Map.of(
-//   //"Table name", slot.getSeat().getSeatName(), 
-//	
-//	// Will map out SlotResponse to JSON 
-//			List<SlotResponse> avaialbeSlots = slots.stream()
-//			.map(slot -> new SlotResponse(
-//					slot.getSeat().getSeatName(),
-//					slot.getSeat().getCapacity(),
-//					timeZoneConverter.convertToLocalTime(slot.getSchedule().getDatetime(), "Australia/Sydney")					
-//					))
-//			.collect(Collectors.toList());
-//			
-//				
-//	return new ResponseEntity<>(Map.of("availableSlots", avaialbeSlots), HttpStatus.OK);
-//}
