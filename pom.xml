@@ -137,8 +137,8 @@
 		<!-- Redisson  -->
 		<dependency>
 			<groupId>org.redisson</groupId>
-			<artifactId>redisson-spring-boot-starter</artifactId>
-			<version>3.40.0</version>
+			<artifactId>redisson</artifactId>
+			<version>3.46.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.stripe/stripe-java -->
 		<dependency>
