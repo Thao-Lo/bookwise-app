@@ -1,0 +1,20 @@
+version: '3.8'
+
+services: 
+  springboot-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports: 
+      - "8080:8080"
+    volumes:
+      - /home/ubuntu/myapp/config:/app/config
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      - redis
+
+  redis: 
+   image: redis:7   
+   ports: 
+     - "6379:6379" 
