@@ -2,7 +2,7 @@ services:
   springboot-app:
     build: 
       context: .
-      dockerfile: Dockerfile
+      image: thaolo/bookwise-app:latest
     ports: 
       - "8080:8080"
     volumes:
