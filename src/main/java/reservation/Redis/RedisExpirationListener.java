@@ -1,6 +1,8 @@
 package reservation.Redis;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -12,7 +14,9 @@ import reservation.Service.RedisService;
 import reservation.Service.SlotService;
 import reservation.Service.StripeService;
 
+@Lazy
 @Component
+@DependsOn("redisMessageListenerContainer")
 public class RedisExpirationListener extends KeyExpirationEventMessageListener {	
 	@Autowired
 	private SlotService slotService;	
@@ -23,6 +27,7 @@ public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 
 	public RedisExpirationListener(RedisMessageListenerContainer listenerContainer) {
 		super(listenerContainer);
+		System.out.println("RedisExpirationListener initialized");
 		// TODO Auto-generated constructor stub
 	}
 

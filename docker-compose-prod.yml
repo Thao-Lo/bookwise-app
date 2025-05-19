@@ -7,6 +7,8 @@ services:
       - /home/ubuntu/myapp/config:/app/config
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      JAVA_TOOL_OPTIONS: >-
+        -Dspring.config.additional-location=file:/app/config/
     depends_on:
       redis:
         condition: service_healthy
