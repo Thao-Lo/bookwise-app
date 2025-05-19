@@ -1,4 +1,4 @@
-package reservation.Utils;
+package reservation.Exception;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,9 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import reservation.Exception.NotFoundException;
-import reservation.Exception.UnauthorizedException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {

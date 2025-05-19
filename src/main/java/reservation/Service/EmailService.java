@@ -37,8 +37,7 @@ public class EmailService {
 			throw new IllegalArgumentException("User email is not valid");
 		}
 
-		LocalDateTime datetime = timeZoneConverter.convertToLocalTime(reservation.getSlot().getSchedule().getDatetime(),
-				"Australia/Sydney");
+		LocalDateTime datetime = reservation.getSlot().getSchedule().getDatetime();
 		String subject = "Booking Confirmation";
 		String body = String.format(
 				"Thank you for booking. Here are your details:\n- Guests: %d\n- Seat: %s\n- Time: %s on %s",
