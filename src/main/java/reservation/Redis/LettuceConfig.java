@@ -10,14 +10,14 @@ public class LettuceConfig {
 	private String hostName;
 	
 	@Value("${spring.redis.port}")
-	private String port;
+	private int port;
 	
 
 	@Bean 
 	public LettuceConnectionFactory lettuceConnectionFactory() {
 		RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-		config.setHostName(null);
-		config.setPort(0);
+		config.setHostName(hostName);
+		config.setPort(port);
 		return new LettuceConnectionFactory(config);
 	}
 	
