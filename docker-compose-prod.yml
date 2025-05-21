@@ -14,7 +14,8 @@ services:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
       SPRING_REDIS_DATABASE: 0
-      SPRING_REDIS_SSL: true    
+      SPRING_REDIS_SSL: true
+      AWS_JAVA_V1_DISABLE_DEPRECATION_ANNOUNCEMENT: true    
     depends_on:
       redis:
         condition: service_healthy      
