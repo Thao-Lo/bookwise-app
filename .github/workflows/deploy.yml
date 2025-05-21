@@ -9,6 +9,10 @@ jobs:
 
     runs-on: [ubuntu-latest]
 
+    permissions:
+      id-token: write #require for OIDC
+      contents: read #allow Github to read the repo
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4      
