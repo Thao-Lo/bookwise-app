@@ -9,10 +9,13 @@ services:
       java -jar bookwise-docker.jar
       --spring.config.location=file:/app/config/
       --spring.profiles.active=prod
+     
+
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379        
+      SPRING_REDIS_PORT: 6379
+      REDIS_ENABLED: true    
       AWS_JAVA_V1_DISABLE_DEPRECATION_ANNOUNCEMENT: true    
     depends_on:
       redis:

@@ -2,10 +2,12 @@ package reservation.Redis;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
@@ -35,6 +37,8 @@ import reservation.Service.StripeService;
 //		System.out.println("RedisExpirationListener initialized");
 //		// TODO Auto-generated constructor stub
 //	}
+@ConditionalOnBean(LettuceConnectionFactory.class)
+@ConditionalOnProperty(name = "redis.enabled", havingValue = "true", matchIfMissing = false)
 public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 
     private final SlotService slotService;
