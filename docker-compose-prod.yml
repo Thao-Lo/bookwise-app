@@ -11,7 +11,10 @@ services:
       --spring.profiles.active=prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_REDIS_HOST: redis    
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_DATABASE: 0
+      SPRING_REDIS_SSL: true    
     depends_on:
       redis:
         condition: service_healthy
