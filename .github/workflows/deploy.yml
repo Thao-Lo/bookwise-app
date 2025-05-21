@@ -48,7 +48,7 @@ jobs:
           --port 22 \
           --cidr ${{ steps.ip.outputs.ipv4 }}/32 
       env: 
-        AWS_DEFAULT_REGION: ap-southest-2
+        AWS_DEFAULT_REGION: ap-southeast-2
     
     # create target folder to store docker-compose
     - name: Copy docker-compose to EC2
@@ -88,14 +88,14 @@ jobs:
           sudo docker compose -f docker-compose-prod.yml up -d
 
     - name: Revoke GitHub IP from Security Group
-    if: always()
-    run: |
-      aws ec2 revoke-security-group-ingress \
-      --group-name ${{ secrets.EC2_SG_IP}} \
-      --protocol tcp \
-      --port 22 \
-      --cidr ${{ steps.ip.outputs.ipv4 }}/32
-    env:
-      AWS_DEFAULT_REGION: ap-southeast-2
+      if: always()
+      run: |
+        aws ec2 revoke-security-group-ingress \
+         --group-name ${{ secrets.EC2_SG_IP}} \
+         --protocol tcp \
+         --port 22 \
+         --cidr ${{ steps.ip.outputs.ipv4 }}/32
+      env:
+        AWS_DEFAULT_REGION: ap-southeast-2
     
    
