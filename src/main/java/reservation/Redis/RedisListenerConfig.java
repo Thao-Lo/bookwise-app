@@ -12,7 +12,7 @@ import reservation.Service.SlotService;
 
 
 @Configuration
-@Profile("prod")
+//@Profile("prod")
 public class RedisListenerConfig {
     @Bean
     public RedisExpirationListener redisExpirationListener(RedisMessageListenerContainer container,
