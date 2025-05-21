@@ -24,6 +24,12 @@ jobs:
 
     - name: Build image push to Docker Hub
       run: docker push ${{ secrets.DOCKER_USERNAME }}/bookwise-app:latest 
+
+    - name: Configure AWS credential
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        role-to-assume: ${{secrets.AWS_GITHUB_ROLE}}
+        aws-region: ap-southeast-2
     
     # create target folder to store docker-compose
     - name: Copy docker-compose to EC2
@@ -59,7 +65,7 @@ jobs:
           cd /home/ubuntu/myapp
           echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
           sudo docker compose -f docker-compose-prod.yml pull
-          sudo docker compose -f docker-compose-prod.yml down || true
+          sudo docker compose -f docker-compose-prod.yml down --remove-orphans || true
           sudo docker compose -f docker-compose-prod.yml up -d
         
    
