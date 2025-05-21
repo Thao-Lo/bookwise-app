@@ -16,7 +16,7 @@ import reservation.Service.StripeService;
 
 @Lazy
 @Component
-@DependsOn("redisMessageListenerContainer")
+@DependsOn({"redisMessageListenerContainer", "lettuceConnectionFactory"})
 public class RedisExpirationListener extends KeyExpirationEventMessageListener {	
 	@Autowired
 	private SlotService slotService;	
