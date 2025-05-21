@@ -13,7 +13,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import jakarta.annotation.PostConstruct;
 @Primary
 @Configuration
-@ConditionalOnProperty(name = "spring.redis.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "spring.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class LettuceConfig {
 	@Value("${spring.redis.host}")
 	private String hostName;
