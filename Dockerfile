@@ -12,4 +12,4 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar bookwise-docker.jar
-ENTRYPOINT ["java", "-jar", "bookwise-docker.jar", "--spring.config.location=file:/app/config/"]
+ENTRYPOINT ["java", "-jar", "bookwise-docker.jar", "--spring.config.location=file:/app/config/", , "--spring.profiles.active=prod"]

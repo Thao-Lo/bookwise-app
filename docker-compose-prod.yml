@@ -5,6 +5,10 @@ services:
       - "8080:8080"
     volumes:
       - /home/ubuntu/myapp/config:/app/config
+    command: >
+      java -jar bookwise-docker.jar
+      --spring.config.location=file:/app/config/
+      --spring.profiles.active=prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_REDIS_HOST: redis    
