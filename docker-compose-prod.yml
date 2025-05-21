@@ -6,10 +6,11 @@ services:
     volumes:
       - /home/ubuntu/myapp/config:/app/config
     command: >
-      java -jar bookwise-docker.jar
+      java -Dio.lettuce.core.epoll=false 
+      -jar bookwise-docker.jar
       --spring.config.location=file:/app/config/
       --spring.profiles.active=prod
-     
+      
 
     environment:
       SPRING_PROFILES_ACTIVE: prod
