@@ -37,8 +37,8 @@ import reservation.Service.StripeService;
 //		System.out.println("RedisExpirationListener initialized");
 //		// TODO Auto-generated constructor stub
 //	}
-@ConditionalOnBean(LettuceConnectionFactory.class)
-@ConditionalOnProperty(name = "redis.enabled", havingValue = "true", matchIfMissing = false)
+@DependsOn("lettuceConnectionFactory")
+@ConditionalOnProperty(name = "spring.redis.enabled", havingValue = "true", matchIfMissing = false)
 public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 
     private final SlotService slotService;
