@@ -1,12 +1,9 @@
 package reservation.Redis;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
@@ -29,8 +26,8 @@ public class LettuceConfig {
 	    System.out.println("Redis Host from @Value: " + hostName);
 	}
 	@Primary
-	@Bean(name = "lettuceConnectionFactory" )
-	public LettuceConnectionFactory lettuceConnectionFactory() {
+	@Bean(name = "customeLettuceConnectionFactory" )
+	public LettuceConnectionFactory customeLettuceConnectionFactory() {
 		RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
 		config.setHostName(hostName);
 		config.setPort(port);

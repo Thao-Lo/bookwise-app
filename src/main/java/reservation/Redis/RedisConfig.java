@@ -3,7 +3,6 @@ package reservation.Redis;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -11,11 +10,11 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-@DependsOn({"lettuceConnectionFactory"})
 //@DependsOn("startRedisServer")
 public class RedisConfig {
 	 // must have return method for bean
 	@Bean
+	@DependsOn({"customeLettuceConnectionFactory"})
 	public RedisTemplate<String, Object> redisTemplate(LettuceConnectionFactory redisConnectionFactory) {
 
 		RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -41,6 +40,7 @@ public class RedisConfig {
 	}
 	
 	@Bean
+	@DependsOn({"customeLettuceConnectionFactory"})
 	public RedisMessageListenerContainer redisMessageListenerContainer(LettuceConnectionFactory redisConnectionFactory) {
 		RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 		container.setConnectionFactory(redisConnectionFactory);
