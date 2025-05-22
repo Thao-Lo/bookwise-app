@@ -15,7 +15,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 //@DependsOn("startRedisServer")
 public class RedisConfig {
-	@Bean
+	@Bean(name = "customLettuceConnectionFactory" )
     public RedisConnectionFactory redisConnectionFactory() {
 	    return new LettuceConnectionFactory("redis", 6379);
     }
