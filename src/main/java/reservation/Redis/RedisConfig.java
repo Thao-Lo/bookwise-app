@@ -14,7 +14,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 	 // must have return method for bean
 	@Bean
-	@DependsOn({"customeLettuceConnectionFactory"})
+	@DependsOn({"customLettuceConnectionFactory"})
 	public RedisTemplate<String, Object> redisTemplate(LettuceConnectionFactory redisConnectionFactory) {
 
 		RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -40,7 +40,7 @@ public class RedisConfig {
 	}
 	
 	@Bean
-	@DependsOn({"customeLettuceConnectionFactory"})
+	@DependsOn({"customLettuceConnectionFactory"})
 	public RedisMessageListenerContainer redisMessageListenerContainer(LettuceConnectionFactory redisConnectionFactory) {
 		RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 		container.setConnectionFactory(redisConnectionFactory);
