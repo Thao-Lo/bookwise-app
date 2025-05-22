@@ -11,9 +11,9 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
 import jakarta.annotation.PostConstruct;
-@Primary
+
 @Configuration
-@ConditionalOnProperty(name = "spring.redis.enabled", havingValue = "true", matchIfMissing = true)
+//@ConditionalOnProperty(name = "spring.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class LettuceConfig {
 	@Value("${spring.redis.host}")
 	private String hostName;
@@ -26,11 +26,10 @@ public class LettuceConfig {
 	
 	@PostConstruct
 	public void debugLettuceConfig() {
-	    System.out.println("💡 Redis Host from @Value: " + hostName);
+	    System.out.println("Redis Host from @Value: " + hostName);
 	}
-
-
-	@Bean
+	@Primary
+	@Bean(name = "lettuceConnectionFactory" )
 	public LettuceConnectionFactory lettuceConnectionFactory() {
 		RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
 		config.setHostName(hostName);
