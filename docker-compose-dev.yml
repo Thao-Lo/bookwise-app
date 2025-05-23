@@ -1,8 +1,30 @@
-version: '3.8'
-
 services:
   redis: 
    image: redis:7
    container_name: local-redis
    ports: 
      - "6379:6379" 
+   command: redis-server --bind 0.0.0.0 --appendonly yes
+   networks:
+     - spring-net
+
+  app:
+     build: 
+       context: .
+       dockerfile: Dockerfile
+     container_name: local-spring 
+     depends_on:
+       - redis
+     ports:
+      - "8080:8080"
+     environment:
+       SPRING_PROFILES_ACTIVE: dev
+       SPRING_REDIS_HOST: redis
+       SPRING_REDIS_PORT: 6379
+       AWS_JAVA_V1_DISABLE_DEPRECATION_ANNOUNCEMENT: true   
+     networks:
+       - spring-net
+
+networks:
+  spring-net:
+    driver: bridge 	   
