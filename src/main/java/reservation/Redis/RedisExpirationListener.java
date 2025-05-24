@@ -19,25 +19,7 @@ import reservation.Service.RedisService;
 import reservation.Service.SlotService;
 import reservation.Service.StripeService;
 
-//@Lazy
-//@Component
-//@ConditionalOnBean(RedisMessageListenerContainer.class)
-//@Profile("prod")
-//@DependsOn({"redisMessageListenerContainer", "lettuceConnectionFactory"})
-//public class RedisExpirationListener extends KeyExpirationEventMessageListener {	
-//	@Autowired
-//	private SlotService slotService;	
-//	@Autowired 
-//	private RedisService redisService;	
-//	@Autowired
-//	private StripeService stripeService;
-//
-//	public RedisExpirationListener(RedisMessageListenerContainer listenerContainer) {
-//		super(listenerContainer);
-//		System.out.println("RedisExpirationListener initialized");
-//		// TODO Auto-generated constructor stub
-//	}
-@DependsOn("lettuceConnectionFactory")
+@DependsOn("customLettuceConnectionFactory")
 public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 
     private final SlotService slotService;
