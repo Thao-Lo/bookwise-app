@@ -33,8 +33,9 @@ public class SecurityConfig {
 //					.requestMatchers("/api/v1/register","/api/v1/login", "/api/v1/verify-email",  "/api/v1/slots", "/api/v1/reservation/create").permitAll() //permit multiple paths
 						.requestMatchers("/api/v1/user/profile").hasAnyRole("GUEST", "ADMIN")
 						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-						.requestMatchers("/api/v1/user/**").hasRole("GUEST")											
-						.anyRequest().permitAll() // all other endpoints require authentication
+						.requestMatchers("/api/v1/user/**").hasRole("GUEST")	
+						.requestMatchers("/api/v1/login","/api/v1/register").permitAll()
+//						.anyRequest().permitAll() // all other endpoints require authentication
 				).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 //				.httpBasic(Customizer.withDefaults()); // enable basic Authentication
