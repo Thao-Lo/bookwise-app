@@ -11,12 +11,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import reservation.Redis.RedisConfig;
 
-
 @SpringBootApplication
 @EnableScheduling
-@ComponentScan(basePackages = {"reservation"})
+@ComponentScan(basePackages = { "reservation" })
 @Import(RedisConfig.class)
-//@Import(reservation.Redis.LettuceConfig.class)
 public class Application {
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);

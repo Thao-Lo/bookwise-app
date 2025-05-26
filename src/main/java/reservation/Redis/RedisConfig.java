@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -13,17 +12,16 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Primary
 @Configuration
-//@DependsOn("startRedisServer")
 public class RedisConfig {
-	 // must have return method for bean
+	// must have return method for bean
 	@Bean
-	@DependsOn({"customLettuceConnectionFactory"})
+	@DependsOn({ "customLettuceConnectionFactory" })
 	public RedisTemplate<String, Object> redisTemplate(LettuceConnectionFactory redisConnectionFactory) {
 
 		RedisTemplate<String, Object> template = new RedisTemplate<>();
 
 		// gắn RedisConnectionFactory vào RedisTemplate, để RedisTemplate biết cách kết
-		// nối app  port 8080 với Redis server port 6379.
+		// nối app port 8080 với Redis server port 6379.
 		template.setConnectionFactory(redisConnectionFactory);
 
 		// Chuyển đổi các khóa (key) trong Redis thành chuỗi (String).
@@ -41,13 +39,14 @@ public class RedisConfig {
 
 		return template;
 	}
-	
+
 	@Bean
-	@DependsOn({"customLettuceConnectionFactory"})
-	public RedisMessageListenerContainer redisMessageListenerContainer(LettuceConnectionFactory redisConnectionFactory) {
+	@DependsOn({ "customLettuceConnectionFactory" })
+	public RedisMessageListenerContainer redisMessageListenerContainer(
+			LettuceConnectionFactory redisConnectionFactory) {
 		RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 		container.setConnectionFactory(redisConnectionFactory);
 		return container;
-	}	
-	
+	}
+
 }

@@ -34,9 +34,7 @@ import reservation.Service.SeatService;
 
 
 @RestController
-@RequestMapping("api/v1/admin/")
-//@DependsOn("startRedisServer")
-//@DependsOn("redissonClient")
+@RequestMapping("api/v1/admin/") 
 public class AdminManagementController extends BaseController {
 	@Autowired
 	SeatService seatService;

@@ -22,27 +22,25 @@ import reservation.Service.StripeService;
 @DependsOn("customLettuceConnectionFactory")
 public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 
-    private final SlotService slotService;
-    private final RedisService redisService;
-    private final StripeService stripeService;
+	private final SlotService slotService;
+	private final RedisService redisService;
+	private final StripeService stripeService;
 
-    public RedisExpirationListener(RedisMessageListenerContainer container,
-                                   SlotService slotService,
-                                   RedisService redisService,
-                                   StripeService stripeService) {
-        super(container); // DO NOT call init() here — we’ll do it manually
-        this.slotService = slotService;
-        this.redisService = redisService;
-        this.stripeService = stripeService;
-        System.out.println("✅ RedisExpirationListener constructed (not yet connected)");
-    }
+	public RedisExpirationListener(RedisMessageListenerContainer container, SlotService slotService,
+			RedisService redisService, StripeService stripeService) {
+		super(container); // DO NOT call init() here — we’ll do it manually
+		this.slotService = slotService;
+		this.redisService = redisService;
+		this.stripeService = stripeService;
+		System.out.println("RedisExpirationListener constructed (not yet connected)");
+	}
 
-    @PostConstruct
-    public void initAfterContextReady() {
-        // Now safe to connect to Redis
-        System.out.println("Manually initializing RedisExpirationListener");
-        this.init(); // Required to activate subscription
-    }
+	@PostConstruct
+	public void initAfterContextReady() {
+		// Now safe to connect to Redis
+		System.out.println("Manually initializing RedisExpirationListener");
+		this.init(); // Required to activate subscription
+	}
 
 	@Override
 	public void onMessage(Message message, byte[] pattern) {
@@ -50,20 +48,21 @@ public class RedisExpirationListener extends KeyExpirationEventMessageListener {
 			String expiredKey = new String(message.getBody());
 			System.out.println("expired message: " + message);
 			System.out.println("expiredKey" + expiredKey);
-			
+
 			// get sessionId from expired Redis key
 			if (expiredKey.startsWith("reservation:") && expiredKey.split(":").length == 2) {
 				String[] keyItems = expiredKey.split(":");
 				String sessionId = keyItems[1];
-				
+
 				// use sessionId to generate again the backup key
 				String backupKey = redisService.generateRedisBackupKey(sessionId);
-				
-				// get slotId and paymentIntentID from the key, String type values 
-				String slotIdString = redisService.getHashValue(backupKey, "slotId");				
+
+				// get slotId and paymentIntentID from the key, String type values
+				String slotIdString = redisService.getHashValue(backupKey, "slotId");
 				String paymentIntentId = redisService.getHashValue(backupKey, "paymentIntentId");
-				
-				// parse slotId from String to Long, then change slot status from Holding to Available
+
+				// parse slotId from String to Long, then change slot status from Holding to
+				// Available
 				if (slotIdString != null) {
 					System.out.println("slotIdString" + slotIdString);
 					Long slotId = Long.parseLong(slotIdString);
