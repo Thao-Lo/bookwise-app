@@ -72,16 +72,15 @@ jobs:
 
     # SSH to EC2 and deploy
     - name: Deploy on EC2 via SSH
-      uses: appleboy/ssh-action@master
-      env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      uses: appleboy/ssh-action@master   
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd /home/ubuntu/myapp
+          export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+          export DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}"
           echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
           sudo docker compose -f docker-compose-prod.yml pull
           sudo docker compose -f docker-compose-prod.yml down --remove-orphans || true
