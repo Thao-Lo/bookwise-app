@@ -9,8 +9,26 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import jakarta.servlet.http.HttpServletRequest;
+import reservation.DTO.ErrorResponse;
+
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
+	@ExceptionHandler(BaseException.class)
+	public ResponseEntity<ErrorResponse> handleBaseException(BaseException ex, HttpServletRequest request) {
+		HttpStatus status = ex.getErrorCode().getStatus();
+				
+		ErrorResponse response = new ErrorResponse(
+				status.value(),
+				ex.getErrorCode(),
+				ex.getMessage(),				
+				request.getRequestURI()
+				);
+		
+		return new ResponseEntity<>(response, status); //<T>: body, and statusCode
+	}
+		
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<Map<String,String>> handleValidationException(MethodArgumentNotValidException ex){
 		// Key: Field name (e.g., username).
