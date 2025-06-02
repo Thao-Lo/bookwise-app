@@ -24,6 +24,8 @@ import jakarta.validation.Valid;
 import reservation.DTO.LoginRequest;
 import reservation.DTO.UserResponse;
 import reservation.Entity.User;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.UserException;
 import reservation.Service.JwtService;
 import reservation.Utils.JwtUtil;
 
@@ -47,12 +49,11 @@ public class LoginController extends BaseController{
 		logger.debug("Login request receive for username/email: {}", request.getUsernameOrEmail());
 		if (user == null) {
 			logger.warn("Loggin failed: User not found for username/email: {}",request.getUsernameOrEmail() );
-			return new ResponseEntity<>(Map.of("error", "Invalid Username or Email."), HttpStatus.BAD_REQUEST);
+			throw new UserException(ErrorCode.INVALID_USERNAME_OR_EMAIL, ("Invalid Username or Email for: " + request.getUsernameOrEmail()));	
 		}
 		if (!userService.isEmailVerified(user.getId())) {
 			logger.warn("Login failed: Email not verified for user Id: {}", user.getId());
-			return new ResponseEntity<>(Map.of("error", "Email not verified. Please Verified your email before login."),
-					HttpStatus.BAD_REQUEST);
+			throw new UserException(ErrorCode.UNVERIFIED_EMAIL, "Email not verified. Please Verified your email before login.");
 		}		
 		
 		logger.debug("Password matches: {} ", passwordEncoder.matches(request.getPassword(), user.getPassword()));
@@ -61,8 +62,9 @@ public class LoginController extends BaseController{
 		// BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
 			logger.warn("Login failed: Incorrect password for user ID: {}", user.getId());
-			return new ResponseEntity<>(Map.of("error", "Incorrect password."), HttpStatus.BAD_REQUEST);
+			throw new UserException(ErrorCode.PASSWORD_MIXMATCH, "Incorrect password.");
 		}
+		
 		logger.info("User logged in successfully: {}", user.getUsername());
 		//generate Tokens, store username and role in token
 		String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole().toString());
@@ -84,8 +86,7 @@ public class LoginController extends BaseController{
 		String refreshToken = request.get("refreshToken");
 		try {
 			if (redisService.isTokenBlacklist(refreshToken)) {
-				return new ResponseEntity<>(Map.of("error", "Refresh Token is invalid or blacklist"),
-						HttpStatus.UNAUTHORIZED);
+				throw new UserException(ErrorCode.INVALID_TOKEN, "Refresh Token is invalid or blacklist");				
 			}
 			Claims claims = jwtUtil.validateToken(refreshToken); // will throw exception here
 			// extract username and role
@@ -96,9 +97,11 @@ public class LoginController extends BaseController{
 			return new ResponseEntity<>(Map.of("accessToken", newAccessToken), HttpStatus.OK);
 			
 		} catch (ExpiredJwtException e) {
-			return new ResponseEntity<>(Map.of("error", "Token expired"), HttpStatus.UNAUTHORIZED);
+			logger.error("Token expired", e);
+			throw new UserException(ErrorCode.INVALID_TOKEN, "Token expired");	
 		} catch (JwtException e) {
-			return new ResponseEntity<>(Map.of("error", "Invalid Token"), HttpStatus.UNAUTHORIZED);
+			logger.error("Invalid Token", e);
+			throw new UserException(ErrorCode.INVALID_TOKEN, "Invalid Token");
 		}
 	}
 
@@ -126,15 +129,11 @@ public class LoginController extends BaseController{
 	@GetMapping("/user/profile")
 	public ResponseEntity<Object> getUserProfile(Principal principal) {
 		checkPrincipal(principal, "You need to login to see your profile.");
-//		if (principal == null) {
-//			return new ResponseEntity<>(Map.of("error", "You need to login to see your profile."),
-//					HttpStatus.UNAUTHORIZED);
-//		}
 		
 		String username = principal.getName();
 		User user = userService.findUserbyUsername(username);
 		if (user == null) {
-			return new ResponseEntity<>(Map.of("error", "User is not exist."), HttpStatus.BAD_REQUEST);
+			throw new UserException(ErrorCode.USER_NOT_FOUND, ("User is not exist for: " + username));
 		}
 		UserResponse userResponse = new UserResponse();
 		userResponse.setUsername(username);
