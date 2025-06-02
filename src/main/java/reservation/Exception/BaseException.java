@@ -9,7 +9,7 @@ public class BaseException extends RuntimeException{
 	private static final long serialVersionUID = 1L;
 	private final ErrorCode errorCode;
 	
-	public BaseException(String message, ErrorCode errorCode) {
+	public BaseException(ErrorCode errorCode, String message) {		
 		super(message);
 		this.errorCode = errorCode;
 	}
