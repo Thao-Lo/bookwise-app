@@ -29,6 +29,8 @@ import reservation.Entity.GuestReservation;
 import reservation.Entity.Schedule;
 import reservation.Entity.Seat;
 import reservation.Entity.Slot;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.AdminException;
 import reservation.Service.ScheduleService;
 import reservation.Service.SeatService;
 
@@ -48,7 +50,7 @@ public class AdminManagementController extends BaseController {
 			@RequestParam(defaultValue = "10") @Min(10) int size) {
 		Page<Seat> seats = seatService.getAllSeat(page, size);
 		// from Base Controller
-		checkPageNotEmpty(seats, "No seats found");
+		checkPageNotEmpty(seats, ErrorCode.SEAT_NOT_FOUND, "No seats found");
 
 		return new ResponseEntity<>(
 				createPaginationReturningData(seats, "seats", seats.getContent()),HttpStatus.OK);
@@ -57,14 +59,12 @@ public class AdminManagementController extends BaseController {
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/seats/reservation-counts")
 	public ResponseEntity<Object> getResearvationCountsPerSeat() {
-		try {
+		
 			List<SeatReservationCountDTO> seatReservationCountDTO = seatService.countTotalReservationsPerSeat();
 			return new ResponseEntity<>(
 					Map.of("message", "Successfully get reservation counts.", "seatDataset", seatReservationCountDTO),
 					HttpStatus.OK);
-		} catch (Exception e) {
-			return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.OK);
-		}
+		
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")
@@ -73,7 +73,7 @@ public class AdminManagementController extends BaseController {
 			@RequestParam(defaultValue = "10") @Min(10) int size) {
 		Page<Schedule> schedulesPage = scheduleService.getAllDates(page, size);
 		// from Base Controller
-		checkPageNotEmpty(schedulesPage, "No Dates found");
+		checkPageNotEmpty(schedulesPage, ErrorCode.SCHEDULE_NOT_FOUND, "No Dates found");
 
 		List<ScheduleResponse> scheduleResponses = schedulesPage.getContent().stream().map(schedule -> {
 			LocalDateTime datetime = schedule.getDatetime();
@@ -93,7 +93,7 @@ public class AdminManagementController extends BaseController {
 			@RequestParam(defaultValue = "10") @Min(10) int size) {
 		Page<Slot> slotsPage = slotService.getAllSlots(page, size);
 		// from Base Controller
-		checkPageNotEmpty(slotsPage, "No Slots found");
+		checkPageNotEmpty(slotsPage, ErrorCode.SLOT_NOT_FOUND, "No Slots found");
 
 		List<SlotResponse> SlotResponses = slotsPage.getContent().stream().map(slot -> {
 			LocalDateTime datetime = slot.getSchedule().getDatetime();
@@ -118,7 +118,7 @@ public class AdminManagementController extends BaseController {
 		
 		Page<GuestReservation> reservationsPage = guestReservationService.getAllReservation(pageable);
 		// from Base Controller
-		checkPageNotEmpty(reservationsPage, "No Reservations found");
+		checkPageNotEmpty(reservationsPage, ErrorCode.RESERVATION_NOT_FOUND, "No Reservations found");
 
 		List<ReservationDTO> reservationResponses = reservationsPage.getContent().stream().map(reservation -> {
 			LocalDateTime datetime = reservation.getSlot().getSchedule().getDatetime();
@@ -140,7 +140,7 @@ public class AdminManagementController extends BaseController {
 	public ResponseEntity<Object> editReservationStatus(@PathVariable Long id, @PathVariable String status) {
 
 		if (!guestReservationService.isStatusValid(status)) {
-			return new ResponseEntity<>(Map.of("error", "Invalid status provided."), HttpStatus.BAD_REQUEST);
+			throw new AdminException(ErrorCode.INVALID_RESERVATION_STATUS,  "Invalid status provided.");			
 		}
 		GuestReservation reservation = guestReservationService.findReservationById(id);
 		GuestReservation.Status updatedStatus = GuestReservation.Status.valueOf(status.toUpperCase());
