@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import reservation.DTO.ErrorResponse;
+import reservation.Enum.ErrorCode;
 
 
 @ControllerAdvice
@@ -28,7 +29,19 @@ public class GlobalExceptionHandler {
 		
 		return new ResponseEntity<>(response, status); //<T>: body, and statusCode
 	}
+	
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+		ErrorResponse response = new ErrorResponse(
+				HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				ErrorCode.INTERNAL_ERROR,
+				ex.getMessage(),				
+				request.getRequestURI()
+				);
 		
+		return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+		
+	}
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<Map<String,String>> handleValidationException(MethodArgumentNotValidException ex){
 		// Key: Field name (e.g., username).
@@ -53,18 +66,9 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.UNAUTHORIZED);
 	}
 	
-	@ExceptionHandler (NotFoundException.class)
-	public ResponseEntity<Object> handleNotFoundException(NotFoundException ex){
-		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.NOT_FOUND); 
-	}
-	
-//	 @ExceptionHandler(UserNotFoundException.class)
-//	public ResponseEntity<Object> handleUserNotFound(UserNotFoundException ex){
-//		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.BAD_REQUEST);
-//	}
-	 
-//	@ExceptionHandler(Exception.class)
-//	public ResponseEntity<String> handleGenericException(Exception ex) {
-//	    return new ResponseEntity<>("Something went wrong!", HttpStatus.INTERNAL_SERVER_ERROR);
-//	}
+//	@ExceptionHandler (NotFoundException.class)
+//	public ResponseEntity<Object> handleNotFoundException(NotFoundException ex){
+//		return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.NOT_FOUND); 
+//	}	
+
 }
