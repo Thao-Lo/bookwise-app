@@ -2,12 +2,18 @@ package reservation.Service;
 
 import java.time.LocalDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import reservation.Entity.GuestReservation;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.EmailException;
+import reservation.Exception.GlobalExceptionHandler;
+import reservation.Exception.UserException;
 import reservation.Utils.TimeZoneConverter;
 
 @Service
@@ -17,6 +23,8 @@ public class EmailService {
 	private JavaMailSender mailSender;
 	@Autowired
 	TimeZoneConverter timeZoneConverter;
+	private final static Logger logger = LoggerFactory.getLogger(EmailService.class);
+
 
 	public void sendVerificationEmail(String toEmail, String verificationCode) {
 		String subject = "Registration Confirmation";
@@ -34,7 +42,7 @@ public class EmailService {
 	public void sendBookingConfirmation(GuestReservation reservation) {
 		String userEmail = reservation.getUser().getEmail();
 		if (userEmail == null || userEmail.isEmpty()) {
-			throw new IllegalArgumentException("User email is not valid");
+			throw new UserException(ErrorCode.INVALID_EMAIL, String.format("User email: %s is not valid", userEmail));
 		}
 
 		LocalDateTime datetime = reservation.getSlot().getSchedule().getDatetime();
@@ -52,7 +60,8 @@ public class EmailService {
 		try {
 			mailSender.send(message);
 		}catch(Exception e){
-			throw new RuntimeException("Failed to send confirmation email", e);
+			logger.error("Failed to send confirmation email to {}", reservation.getUser().getEmail(), e);
+			throw new EmailException(ErrorCode.EMAIL_FAILED, "Failed to send confirmation email to: " + reservation.getUser().getEmail());
 		}
 	}
 }

@@ -19,6 +19,8 @@ import reservation.Entity.Schedule;
 import reservation.Entity.Seat;
 import reservation.Entity.Slot;
 import reservation.Entity.Slot.Status;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.SlotException;
 import reservation.Repository.ScheduleRepository;
 import reservation.Repository.SeatRepository;
 import reservation.Repository.SlotRepository;
@@ -47,7 +49,8 @@ public class SlotService {
 	}
 
 	public void markSlotHoldingToAvailable(Long slotId) {
-		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
+		Slot slot = slotRepository.findById(slotId)
+				.orElseThrow(() -> new SlotException(ErrorCode.SLOT_NOT_FOUND, "Slot not found for Id: " + slotId));
 		if (slot != null && slot.getStatus() == HOLDING) {
 			slot.setStatus(AVAILABLE);
 			slotRepository.save(slot);
@@ -55,13 +58,14 @@ public class SlotService {
 	}
 
 	public void markSlotHolding(Long slotId) {
-		Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new IllegalArgumentException("Slot not found"));
+		Slot slot = slotRepository.findById(slotId)
+				.orElseThrow(() -> new SlotException(ErrorCode.SLOT_NOT_FOUND, "Slot not found for Id: " + slotId));
 		if (slot != null && slot.getStatus() == AVAILABLE) {
 			slot.setStatus(HOLDING);
 			slotRepository.save(slot);
 			return;
 		}
-		throw new IllegalArgumentException("Slot is not available for booking");
+		throw new SlotException(ErrorCode.SLOT_UNAVAILABLE, "Slot is not available for booking");		
 	}
 
 	public void generateSlots() {

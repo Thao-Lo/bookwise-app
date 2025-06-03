@@ -30,6 +30,10 @@ import jakarta.validation.constraints.Min;
 import reservation.DTO.ReservationDTO;
 import reservation.Entity.GuestReservation;
 import reservation.Entity.User;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.PaymentException;
+import reservation.Exception.RedisException;
+import reservation.Exception.ReservationException;
 import reservation.Service.EmailService;
 import reservation.Service.GuestReservationService;
 import reservation.Service.RedisService;
@@ -55,8 +59,7 @@ public class GuestReservationController extends BaseController{
 		boolean isSlotLock = guestReservationService.isSlotReserve(reservationDTO.getId());
 		
 		if (!isSlotLock) {
-			return new ResponseEntity<>(Map.of("message", "Slot is already being held by another user."),
-					HttpStatus.CONFLICT);
+			throw new ReservationException(ErrorCode.SLOT_UNAVAILABLE, "Slot is already being held by another user.");			
 		}
 		// Mark slot from AVAILABLE to HOLDING in Db
 		slotService.markSlotHolding(reservationDTO.getId());
@@ -101,8 +104,9 @@ public class GuestReservationController extends BaseController{
 
 		if (reservationData == null || !reservationData.containsKey("reservation")) {
 			logger.warn("Create Payment: Cannot create payment because Redis session not found or expired.");
-			return new ResponseEntity<>(Map.of("error", "Session not found or expired"), HttpStatus.BAD_REQUEST);
+			throw new RedisException(ErrorCode.REDIS_SESSION_NOT_FOUND, "Session not found or expired");			
 		}
+		
 		try {
 			ReservationDTO reservationDTO = (ReservationDTO) reservationData.get("reservation");
 			//check if isSlotAvailable, not throw exception, and return
@@ -121,9 +125,8 @@ public class GuestReservationController extends BaseController{
 					"Please complete your payment to confirm your booking.", "paymentIntentId", paymentIntent.getId()),
 					HttpStatus.OK);
 		} catch (StripeException e) {
-			e.printStackTrace();
-			return new ResponseEntity<>(Map.of("error", "Payment processing failed", "details", e.getMessage()),
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Stripe payment failed", e);		
+			throw new PaymentException(ErrorCode.PAYMENT_FAILED, String.format("Payment processing failed: %s", e.getMessage()));			
 		}
 	}
 
@@ -138,12 +141,12 @@ public class GuestReservationController extends BaseController{
 		Map<String, Object> reservationData = redisService.getReservation(sessionId);
 
 		if (reservationData == null || !reservationData.containsKey("reservation")) {
-			return new ResponseEntity<>(Map.of("error", "Session not found or expired"), HttpStatus.BAD_REQUEST);
+			throw new RedisException(ErrorCode.REDIS_SESSION_NOT_FOUND, "Session not found or expired");			
 		}
 
 		String storedPaymentIntentId = redisService.getPaymentIntentId(sessionId);
 		if (!storedPaymentIntentId.equals(paymentIntentId)) {
-			return new ResponseEntity<>(Map.of("error", "Invalid payment information."), HttpStatus.BAD_REQUEST);
+			throw new PaymentException(ErrorCode.INVALID_PAYMENT, "Invalid payment information.");
 		}
 
 		try {
@@ -154,8 +157,7 @@ public class GuestReservationController extends BaseController{
 			PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
 
 			if (!"succeeded".equals(paymentIntent.getStatus())) {
-				return new ResponseEntity<>(Map.of("error", "Payment not completed. Please try again."),
-						HttpStatus.BAD_REQUEST);
+				throw new PaymentException(ErrorCode.PAYMENT_INCOMPLETE, "Payment not completed. Please try again.");
 			}
 			guestReservationService.saveNewReservation(principal.getName(), reservationDTO.getId(),
 					reservationDTO.getCapacity());
@@ -175,10 +177,10 @@ public class GuestReservationController extends BaseController{
 					Map.of("message", "Your booking is completed. Please check your email for booking confirmation"),
 					HttpStatus.OK);
 		} catch (Exception e) {
-			e.printStackTrace();
-			return new ResponseEntity<>(
-					Map.of("error", "An error occurred while confirming your reservation", "details", e.getMessage()),
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Reservation failed", e);	
+			throw new ReservationException(
+					ErrorCode.RESERVATION_FAILED,
+					String.format("An error occurred while confirming your reservation: %s", e.getMessage()));
 		}
 	}
 
@@ -193,12 +195,16 @@ public class GuestReservationController extends BaseController{
 		System.out.println(reservations.getTotalPages());
 
 		if (reservations == null || reservations.isEmpty()) {
-			return new ResponseEntity<>(Map.of("error", "You have no reservation yet"), HttpStatus.BAD_REQUEST);
+			throw new ReservationException(ErrorCode.RESERVATION_NOT_FOUND, "You have no reservation yet");
 		}
 		List<ReservationDTO> reservationDTOs = reservations.stream().map(reservation -> {
 			LocalDateTime localDatetime = reservation.getSlot().getSchedule().getDatetime();
-			return new ReservationDTO(reservation.getId(), reservation.getSlot().getSeat().getSeatName(),
-					reservation.getNumberOfGuests(), localDatetime.toLocalDate(), localDatetime.toLocalTime(),
+			return new ReservationDTO(
+					reservation.getId(), 
+					reservation.getSlot().getSeat().getSeatName(),
+					reservation.getNumberOfGuests(), 
+					localDatetime.toLocalDate(),
+					localDatetime.toLocalTime(),
 					reservation.getStatus().name());
 		}).collect(Collectors.toList());
 		return new ResponseEntity<>(Map.of("reservationList", reservationDTOs, "totalRows",
@@ -214,8 +220,7 @@ public class GuestReservationController extends BaseController{
 		Map<Object, Object> rawData = redisTemplate.opsForHash().entries(existingKey);
 
 		if (rawData == null || rawData.isEmpty()) {
-			return new ResponseEntity<>(Map.of("error", "SessionId is expired or no longer exist"),
-					HttpStatus.NOT_FOUND);
+			throw new RedisException(ErrorCode.REDIS_SESSION_NOT_FOUND, "SessionId is expired or no longer exist");
 		}
 		// casting to match the template String, Object
 		Map<String, Object> reservationData = rawData.entrySet().stream()
@@ -231,8 +236,7 @@ public class GuestReservationController extends BaseController{
 			stripeService.cancelPaymentIntent((String) reservationData.get("paymentIntentId"), "duplicate");
 			logger.info("Change reservation: delete Redis key, release Reddison lock and cancel payment intent for nonprocessing reservation.");
 		} catch (Exception e) {
-			return new ResponseEntity<>(Map.of("error", "Failed to perform Redis clean up", "details", e.getMessage()),
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new RedisException(ErrorCode.REDIS_CLEAN_UP_FAILED, ("Failed to perform Redis clean up: " + e.getMessage()));
 		}
 		return new ResponseEntity<>(Map.of("message", "Delete Redis key and release Redisson lock successfully."),
 				HttpStatus.OK);
@@ -240,7 +244,7 @@ public class GuestReservationController extends BaseController{
 	
 	private void validateSlotAvalability(Long slotId) {		
 		boolean isSlotAvailable = guestReservationService.isSlotAvailable(slotId);
-		checkIsSlotAvailable(isSlotAvailable, "Slot is no longer available");		
+		checkIsSlotAvailable(isSlotAvailable, ErrorCode.SLOT_UNAVAILABLE, "Slot is no longer available");		
 	}
 	
 }

@@ -19,6 +19,8 @@ import jakarta.validation.constraints.Min;
 import reservation.DTO.UserResponse;
 import reservation.Entity.User;
 import reservation.Entity.User.Role;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.AdminException;
 
 
 @RestController
@@ -36,7 +38,7 @@ public class AdminUserController extends BaseController {
 		if (pageable) {
 			Page<User> users = userService.showAllUsers(page, size);
 			// from Base Controller
-			checkPageNotEmpty(users, "No users found.");
+			checkPageNotEmpty(users, ErrorCode.USER_NOT_FOUND, "No users found.");
 			
 			// map Stream<User> thành Stream<UserResponse>
 			List<UserResponse> userPage = users.getContent().stream().map(
@@ -56,7 +58,7 @@ public class AdminUserController extends BaseController {
 					"totalUsers", users.getTotalElements()), HttpStatus.OK);
 		}
 		List<User> users = userService.showAllUsers();
-		checkListNotEmpty(users,"No users found.");
+		checkListNotEmpty(users, ErrorCode.USER_NOT_FOUND, "No users found.");
 		
 		List<UserResponse> userList = users.stream().map(
 				user -> {
@@ -75,7 +77,7 @@ public class AdminUserController extends BaseController {
 	public ResponseEntity<Object> editUserRole(Principal principal, @PathVariable Long id, @PathVariable String role) {
 		checkPrincipal(principal, "Not authorized." );
 		if (!userService.isValidRole(role)) {
-			return new ResponseEntity<>(Map.of("error", String.format("Invalid role provided: %s.", role)), HttpStatus.BAD_REQUEST);
+			throw new AdminException(ErrorCode.INVALID_ROLE, String.format("Invalid role provided: %s.", role));			
 		}
 		
 		User user = userService.findUserById(id);

@@ -13,6 +13,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import reservation.DTO.ReservationDTO;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.RedisException;
+import reservation.Exception.ReservationException;
 
 @Service
 public class RedisService {
@@ -20,10 +23,6 @@ public class RedisService {
 	private RedisTemplate<String, Object> redisTemplate;
 
 	private static final long TTL = 300; // Time to live 5 mins
-	// Centralized Error Message
-	private static final String SESSION_NOT_FOUND = "Session data not found or expired.";
-	private static final String INVALID_RESERVATION_STATE = "Reservation is not in a valid state for confirmation.";
-
 
 	public String saveReservation(ReservationDTO reservationDTO) {
 		// create unique number
@@ -68,7 +67,7 @@ public class RedisService {
 
 //	    Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
 		if (id == null || tableName == null || capacity == null || date == null || time == null || status == null || bookingStatus == null) {
-			throw new IllegalArgumentException(SESSION_NOT_FOUND);
+			throw new RedisException(ErrorCode.REDIS_SESSION_NOT_FOUND, "Session data not found or expired for Session Id: " + sessionId);
 		}
 		ReservationDTO reservationDTO = new ReservationDTO();
 //		reservationDTO.setSessionId(sessionId);
@@ -101,7 +100,7 @@ public class RedisService {
 	public String getPaymentIntentId(String sessionId) {		
 		String id = getHashValue(generateRedisKey(sessionId), "paymentIntentId");	
 		if (id == null) {
-			throw new IllegalArgumentException(SESSION_NOT_FOUND);
+			throw new RedisException(ErrorCode.REDIS_SESSION_NOT_FOUND, "Session data not found or expired for Id: " + id);
 		}
 		return id;
 	}
@@ -109,7 +108,7 @@ public class RedisService {
 	public void setStatusToConfirming(String sessionId) {
 		String bookingStatus = (String) redisTemplate.opsForHash().get(generateRedisKey(sessionId), "bookingStatus");
 		if(!bookingStatus.equals("HOLDING") || bookingStatus == null) {
-			  throw new IllegalStateException(INVALID_RESERVATION_STATE);
+			  throw new RedisException(ErrorCode.INVALID_RESERVATION_STATE, "Reservation is not in a valid state for confirmation.");
 		}
 		redisTemplate.opsForHash().put(generateRedisKey(sessionId), "bookingStatus", "CONFIRMING");
 	}

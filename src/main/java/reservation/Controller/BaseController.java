@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import reservation.Entity.Slot;
+import reservation.Enum.ErrorCode;
 import reservation.Exception.NotFoundException;
 import reservation.Exception.UnauthorizedException;
 import reservation.Service.EmailService;
@@ -46,26 +47,26 @@ public abstract class BaseController {
 	//throw exception
 	protected void checkPrincipal(Principal principal, String errorMessage) {
 		if(principal == null) {
-			throw new UnauthorizedException(errorMessage);
+			throw new UnauthorizedException(ErrorCode.USER_UNAUTHORIZED, errorMessage);
 		}
 	}
 	
 	//if (slotsPage.isEmpty()) return new ResponseEntity<>(Map.of("Error", "No Slots found"), HttpStatus.NOT_FOUND);}
-	protected void checkPageNotEmpty(Page<?> page, String errorMessage) {
+	protected void checkPageNotEmpty(Page<?> page, ErrorCode code, String errorMessage) {
 		if(page.isEmpty() || page == null) {
-			throw new NotFoundException(errorMessage);
+			throw new NotFoundException(code, errorMessage);
 		}
 	}
 	
-	protected void checkListNotEmpty(List<?> list, String errorMessage) {
+	protected void checkListNotEmpty(List<?> list, ErrorCode code, String errorMessage) {
 		if(list.isEmpty() || list == null) {
-			throw new NotFoundException(errorMessage);
+			throw new NotFoundException(code, errorMessage);
 		}
 	}	
 	
-	protected void checkIsSlotAvailable(boolean isSlotAvailable, String errorMessage) {
+	protected void checkIsSlotAvailable(boolean isSlotAvailable, ErrorCode code, String errorMessage) {
 		if (!isSlotAvailable) {
-			throw new NotFoundException(errorMessage);			
+			throw new NotFoundException(code, errorMessage);			
 		}
 	}
 }

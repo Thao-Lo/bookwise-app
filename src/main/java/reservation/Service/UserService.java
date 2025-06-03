@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 import reservation.Entity.User;
 import reservation.Entity.User.Role;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.UserException;
 import reservation.Repository.UserRepository;
 
 @Service
@@ -66,7 +68,8 @@ public class UserService {
 	}
 
 	public User findUserById(Long id) {
-		return userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+		return userRepository.findById(id)
+				.orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND, "User not found for Id: " + id));
 	}
 
 	public User findUserByUsername(String username) {

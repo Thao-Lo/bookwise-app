@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.constraints.Positive;
 import reservation.DTO.SlotResponse;
 import reservation.Entity.Slot;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.SlotException;
 import reservation.Service.SlotService;
 import reservation.Utils.TimeZoneConverter;
 
@@ -42,8 +44,8 @@ public class SlotController {
 		List<Slot> slots = slotService.getSlots(capacity, date, time);
 		
 		if(slots.isEmpty()) {
-			return new ResponseEntity<>(Map.of("error", String.format("No slots available for capacity: %d, date: %s, time: %s", 
-			          capacity, date, time)), HttpStatus.NOT_FOUND);
+			throw new SlotException(ErrorCode.SLOT_NOT_FOUND, String.format("No slots available for capacity: %d, date: %s, time: %s", 
+			          capacity, date, time));			
 		}
 	
 				List<SlotResponse> avaialbeSlots = slots.stream()

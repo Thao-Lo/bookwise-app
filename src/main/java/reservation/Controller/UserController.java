@@ -23,6 +23,8 @@ import jakarta.validation.constraints.NotEmpty;
 import reservation.DTO.RegisterRequest;
 import reservation.Entity.User;
 import reservation.Entity.User.Role;
+import reservation.Enum.ErrorCode;
+import reservation.Exception.UserException;
 import reservation.Service.EmailService;
 import reservation.Service.UserService;
 
@@ -47,15 +49,15 @@ public class UserController {
 	@PostMapping("/register")
 	public ResponseEntity<Object> registerNewUser(@Valid @RequestBody RegisterRequest request) {
 		
-		if (userService.isUsernameExist(request.getUsername())) {			
-			return new ResponseEntity<>(Map.of("error","Username is already existed."), HttpStatus.CONFLICT);
+		if (userService.isUsernameExist(request.getUsername())) {
+			throw new UserException(ErrorCode.USERNAME_EXIST, String.format("Username: %s is already existed.", request.getUsername()));
 		}
 		if (userService.isEmailExist(request.getEmail())) {
-			return new ResponseEntity<>(Map.of("error","Email is already existed."), HttpStatus.CONFLICT);
+			throw new UserException(ErrorCode.EMAIL_EXIST, String.format("Email: %s is already existed.", request.getEmail()));
 		}
 		// confirm re-enter password
 		if (!request.getPassword().equals(request.getConfirmPassword())) {
-			return new ResponseEntity<>(Map.of("error","Passwords are not matched"), HttpStatus.BAD_REQUEST);
+			throw new UserException(ErrorCode.PASSWORD_MIXMATCH, "Passwords are not matched");
 		}
 		logger.info("Register: valid inputs received for username: {}", request.getUsername());		
 		
@@ -84,13 +86,13 @@ public class UserController {
 		User user = userService.findUserByEmail(email);
 
 		if (user == null) {
-			return new ResponseEntity<>(Map.of("error","User is not found."), HttpStatus.NOT_FOUND);
+			throw new UserException(ErrorCode.USER_NOT_FOUND, String.format("User is not found for email: %s", email));
 		}
 		if (!user.getVerificationCode().equals(code)) {
-			return new ResponseEntity<>(Map.of("error","Invalid verification code."), HttpStatus.BAD_REQUEST);
+			throw new UserException(ErrorCode.INVALID_VERIFICATION_CODE, "Invalid verification code.");
 		}
 		if (user.getCodeExpirationTime() == null || user.getCodeExpirationTime().isBefore(LocalDateTime.now())) {
-			return new ResponseEntity<>(Map.of("error","verification code expired"), HttpStatus.BAD_REQUEST);
+			throw new UserException(ErrorCode.VERIFICATION_CODE_EXPIRED, "Verification code expired");
 		}
 		user.setEmailVerified(true);
 		user.setVerificationCode(null);
@@ -105,10 +107,10 @@ public class UserController {
 		User user = userService.findUserByEmail(email);
 
 		if (user == null) {
-			return new ResponseEntity<>(Map.of("error","User is not found."), HttpStatus.NOT_FOUND);
+			throw new UserException(ErrorCode.USER_NOT_FOUND, ("User is not found for email: " + email));
 		}
 		if(user.isEmailVerified()) {
-			return new ResponseEntity<>(Map.of("error","Email is already verified."), HttpStatus.BAD_REQUEST);
+			throw new UserException(ErrorCode.VERIFIED_EMAIL, "Email is already verified.");
 		}
 		String newCode = UUID.randomUUID().toString();
 
