@@ -12,7 +12,8 @@ import reservation.Entity.User;
 public interface UserRepository extends JpaRepository<User, Long> {
 	User findByUsername(String username);
 
-	User findByEmail(String email);
+//	User findByEmail(String email);
+	Optional<User> findByEmail(String email);
 	
 	User findByUsernameOrEmail(String username, String email);	
 	
@@ -20,4 +21,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	
 //	boolean findByIdAndEmailVerifiedTrue(Long id); // return User
 	Optional<User> findByIdAndEmailVerifiedTrue(Long id);
+	
+	
 }
