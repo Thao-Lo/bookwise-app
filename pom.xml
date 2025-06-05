@@ -37,6 +37,12 @@
    			 <artifactId>aws-java-sdk-s3</artifactId>
    			 <version>1.12.783</version>
 		</dependency>
+		<!-- Spring OAuth2 Client -->
+		<dependency>
+    		<groupId>org.springframework.boot</groupId>
+   			 <artifactId>spring-boot-starter-oauth2-client</artifactId>
+   			 <version>3.5.0</version>
+		</dependency>
 		<!-- Jps repository -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
