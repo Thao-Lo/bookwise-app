@@ -1,9 +1,13 @@
 package reservation.Auth.OAuth2;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -28,6 +32,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 	@Autowired
 	UserService userService;
 	
+	@Autowired
+	private RedisTemplate<String, Object> redisTemplate;
+
+	
 	@Override 
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException, ServletException{
@@ -42,21 +50,19 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 		//generate token, username == email
 		String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole().name());
 		String refreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getRole().name());
-		
-		//prepare HTTP response: json and status
-		response.setContentType("application/json");
-		response.setStatus(HttpServletResponse.SC_OK); //200
-		
-		//JSON String
-		String body = new ObjectMapper().writeValueAsString(Map.of(
-				"message", "Login successfully.",
+						
+		Map<String, Object> body = Map.of("message", "Login successfully.",
 				"accessToken", accessToken, 
 				"refreshToken", refreshToken,
 				"user" , new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name())
-				));
+				);
 		
-		//write response back to client
-		response.getWriter().write(body);
+		//Create sessionId and store with body in redis 
+		String sessionId = UUID.randomUUID().toString();
+		redisTemplate.opsForValue().set("oauth2:sessionId:" + sessionId, body, Duration.ofMinutes(2));
+		
+		//write response back to client with sessionId + status 302:FOUND
+		response.sendRedirect("http://localhost:3000/oauth2/success?sessionId=" + sessionId);		
 	}
 
 }
