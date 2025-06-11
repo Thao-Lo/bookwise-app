@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import reservation.DTO.LoginResponse;
 import reservation.DTO.ReservationDTO;
 import reservation.Enum.ErrorCode;
 import reservation.Exception.RedisException;
@@ -96,6 +97,15 @@ public class RedisService {
 		return (String) redisTemplate.opsForHash().get(key, field);
 	}	
 	
+	
+	public LoginResponse getOauth2LoginDetails(String key) {
+		LoginResponse loginResponse = (LoginResponse) redisTemplate.opsForValue().get(key);
+		if(loginResponse == null) {
+			throw new RedisException(ErrorCode.REDIS_SESSION_NOT_FOUND, "Session data not found or expired for key: " + key);
+		}
+		return loginResponse;
+	}
+	
 	//get paymentIntend Id for stripe
 	public String getPaymentIntentId(String sessionId) {		
 		String id = getHashValue(generateRedisKey(sessionId), "paymentIntentId");	
@@ -112,8 +122,13 @@ public class RedisService {
 		}
 		redisTemplate.opsForHash().put(generateRedisKey(sessionId), "bookingStatus", "CONFIRMING");
 	}
+	// for reservation + sessionId
 	public void deleteKey(String sessionId) {
 		redisTemplate.delete(generateRedisKey(sessionId));
+	}
+	// for oAuth2:sessionId
+	public void deleteOauthKey(String key) {
+		redisTemplate.delete(key);
 	}
 		
 	public Long getRemainingTTL(String sessionId) {		

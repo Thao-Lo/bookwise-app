@@ -22,6 +22,7 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import reservation.Enum.AuthProvider;
 
 
 @Data
@@ -43,7 +44,14 @@ public class User {
 
 	@Column(nullable = false, unique = true, length = 255)
 	private String password;
-
+	
+	@Enumerated(EnumType.STRING)
+	@Column(nullable=false)
+	private AuthProvider provider;
+	
+	@Column(name = "provider_id")
+	private String providerId;
+		
 	@Column(name = "reset_token")
 	private String resetToken;
 
@@ -84,29 +92,6 @@ public class User {
 		this.username = username;
 		this.email = email;
 	}
-	
-	
-	
-//	public enum Role {
-//		GUEST("guest"), ADMIN("admin");
-//
-//		private final String dbValue;
-//
-//		Role(String dbValue) {
-//			this.dbValue = dbValue;
-//		}
-//		public String getDbValue() {
-//			return dbValue;
-//		}
-//		
-//		public static Role fromDbValue(String dbValue) {
-//			for(Role role: Role.values()) {
-//				if(role.getDbValue().equalsIgnoreCase(dbValue)) {
-//					return role;
-//				}
-//			}
-//			throw new IllegalArgumentException("Invalid role value: " + dbValue);
-//		}
-//	}
+
 
 }
