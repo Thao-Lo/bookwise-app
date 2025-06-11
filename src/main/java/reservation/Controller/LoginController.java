@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.jsonwebtoken.Claims;
@@ -22,6 +23,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
 import reservation.DTO.LoginRequest;
+import reservation.DTO.LoginResponse;
 import reservation.DTO.UserResponse;
 import reservation.Entity.User;
 import reservation.Enum.ErrorCode;
@@ -79,6 +81,21 @@ public class LoginController extends BaseController{
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@PostMapping("/auth/token")
+	public ResponseEntity<Object> getTokenFromSessionId(@Valid @RequestBody Map<String, String> request){
+		String sessionId = request.get("sessionId");
+		if(sessionId == null) {
+			throw new UserException(ErrorCode.OAUTH2_SESSIONID_NOT_FOUND, "SessionId is not found, cannot retrieve user data.");
+		}
+		String key = "oauth2:sessionId:" + sessionId;
+		
+		LoginResponse loginResponse = (LoginResponse) redisService.getOauth2LoginDetails(key);		
+		System.out.println("oauth2: " + loginResponse);
+		redisService.deleteOauthKey(key);
+		return ResponseEntity.ok(loginResponse);
+	}
+	
 	
 	// refresh accessToken if refreshToken is still valid
 	@PostMapping("/refresh-token")
