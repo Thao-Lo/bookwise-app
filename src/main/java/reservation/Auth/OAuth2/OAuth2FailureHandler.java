@@ -22,7 +22,7 @@ public class OAuth2FailureHandler implements AuthenticationFailureHandler {
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException exception) throws IOException, ServletException{
-		String protocol = profile.equalsIgnoreCase("prod") ? "https://zavism" : "http://localhost:3000";
+		String protocol = profile.equalsIgnoreCase("prod") ? "https://zavism.com" : "http://localhost:3000";
 		//error: Email is used with .... -> after encode: Email+is+used+with, no white space on URL
 		String errorMessage = ((OAuth2AuthenticationException)exception).getError().getDescription();
 		String redirectURL = protocol + "/oauth2/error?error=" + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);

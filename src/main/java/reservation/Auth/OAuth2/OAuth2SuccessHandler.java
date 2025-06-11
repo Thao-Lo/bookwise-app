@@ -43,7 +43,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 	@Override 
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException, ServletException{
-		String protocol = profile.equalsIgnoreCase("prod") ? "https://zavism" : "http://localhost:3000";
+		String protocol = profile.equalsIgnoreCase("prod") ? "https://zavism.com" : "http://localhost:3000";
 		
 		//Get authenticated OAuth2User from security context
 		OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
