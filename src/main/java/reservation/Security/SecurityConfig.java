@@ -16,6 +16,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import reservation.Auth.OAuth2.CustomOAuth2UserService;
+import reservation.Auth.OAuth2.OAuth2FailureHandler;
 import reservation.Auth.OAuth2.OAuth2SuccessHandler;
 
 @Configuration
@@ -29,6 +30,8 @@ public class SecurityConfig {
 	
 	@Autowired
 	OAuth2SuccessHandler oAuth2SuccessHandler;
+	@Autowired 
+	OAuth2FailureHandler oAuth2FailureHandler;
 	
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -45,6 +48,7 @@ public class SecurityConfig {
 				.oauth2Login(oauth -> oauth
 						.userInfoEndpoint(userInfor -> userInfor.userService(customOAuth2UserService))
 						.successHandler(oAuth2SuccessHandler)
+						.failureHandler(oAuth2FailureHandler)
 						)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 				
