@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import reservation.DTO.LoginResponse;
 import reservation.DTO.UserResponse;
 import reservation.Entity.User;
 import reservation.Service.UserService;
@@ -34,11 +36,15 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 	
 	@Autowired
 	private RedisTemplate<String, Object> redisTemplate;
-
+	
+	@Value("${spring.profiles.active}")
+	private String profile;
 	
 	@Override 
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException, ServletException{
+		String protocol = profile.equalsIgnoreCase("prod") ? "https://zavism" : "http://localhost:3000";
+		
 		//Get authenticated OAuth2User from security context
 		OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 		//Extract email from OAuth2 Provider: Google
@@ -50,19 +56,21 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 		//generate token, username == email
 		String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole().name());
 		String refreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getRole().name());
-						
-		Map<String, Object> body = Map.of("message", "Login successfully.",
-				"accessToken", accessToken, 
-				"refreshToken", refreshToken,
-				"user" , new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name())
-				);
+		LoginResponse loginResponse = new LoginResponse(
+				"Login successfully.",
+				accessToken,
+				refreshToken,
+				new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()
+				));			
+
 		
 		//Create sessionId and store with body in redis 
 		String sessionId = UUID.randomUUID().toString();
-		redisTemplate.opsForValue().set("oauth2:sessionId:" + sessionId, body, Duration.ofMinutes(2));
+		redisTemplate.opsForValue().set("oauth2:sessionId:" + sessionId, loginResponse, Duration.ofMinutes(2));
 		
 		//write response back to client with sessionId + status 302:FOUND
-		response.sendRedirect("http://localhost:3000/oauth2/success?sessionId=" + sessionId);		
+		response.sendRedirect(protocol + "/oauth2/success?oauth2sessionId=" + sessionId);		
+		//localhost:8080/oauth2/authorization/google
 	}
 
 }
