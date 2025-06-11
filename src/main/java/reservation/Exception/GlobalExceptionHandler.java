@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
 	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
-		logger.error("Unhandle exception occured: ", ex.getMessage());
+		logger.error("Unhandle exception occured: ", ex);
 		ErrorResponse response = new ErrorResponse(
 				HttpStatus.INTERNAL_SERVER_ERROR.value(),
 				ErrorCode.INTERNAL_ERROR,
