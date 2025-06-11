@@ -82,9 +82,9 @@ jobs:
           export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
           export DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}"
           echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-          sudo docker compose -f docker-compose-prod.yml pull
-          sudo docker compose -f docker-compose-prod.yml down --remove-orphans || true
-          sudo docker compose -f docker-compose-prod.yml up -d
+          docker compose -f docker-compose-prod.yml pull
+          docker compose -f docker-compose-prod.yml down --remove-orphans || true
+          docker compose -f docker-compose-prod.yml up -d
 
     - name: Revoke GitHub IP from Security Group
       if: always()
