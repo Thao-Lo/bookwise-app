@@ -12,11 +12,7 @@ services:
     command: >
       java -Dio.lettuce.core.epoll=false 
       -jar bookwise-docker.jar
-      --spring.config.location=file:/app/config/
-      --spring.profiles.active=prod
-      --spring.redis.host=redis
-      --spring.redis.enabled=true
-      
+      --spring.config.location=file:/app/config/    
 
     environment:
       SPRING_PROFILES_ACTIVE: prod

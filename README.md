@@ -81,7 +81,7 @@ The frontend communicates with the backend via REST APIs to:
 
 ---
 
-### Backend (`boookwise-app`)
+### Backend (`bookwise-app`)
 - **src/main/java/...**:
   - **Controller**: Handles REST API requests.
   - **Entity**: Maps database tables using Hibernate.
@@ -94,7 +94,7 @@ The frontend communicates with the backend via REST APIs to:
 - **resources/db/migration**: Stores Flyway migration scripts.
 - **test/java/...**: Contains mock tests for email, user, and JWT services.
 
-### Frontend ()
+### Frontend (`bookwise-app-react`)
 - **src/component/...**:
   - For users: Components for login, registration, slot selection, reservation details, and countdown timer.
   - For admins: Components for managing tables, users, reservations, and displaying charts.
