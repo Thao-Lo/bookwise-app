@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
-import com.stripe.param.PaymentIntentCreateParams;
 
 import jakarta.validation.constraints.Min;
 import reservation.DTO.ReservationDTO;
@@ -34,13 +32,7 @@ import reservation.Enum.ErrorCode;
 import reservation.Exception.PaymentException;
 import reservation.Exception.RedisException;
 import reservation.Exception.ReservationException;
-import reservation.Service.EmailService;
-import reservation.Service.GuestReservationService;
-import reservation.Service.RedisService;
-import reservation.Service.SlotService;
 import reservation.Service.StripeService;
-import reservation.Service.UserService;
-import reservation.Utils.TimeZoneConverter;
 
 @RestController
 @RequestMapping("/api/v1/")
